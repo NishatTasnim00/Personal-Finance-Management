@@ -2,6 +2,9 @@
 @plugin "daisyui" {
   themes: false; 
 }
+html {
+  transition: background-color 0.3s, color 0.3s;
+}
 
 
 @plugin "daisyui/theme" {
