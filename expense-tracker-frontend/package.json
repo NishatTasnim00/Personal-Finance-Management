@@ -8,14 +8,17 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:css": "npx @tailwindcss/cli -i app.css -o public/output.css"
+    "build:css": "npx @tailwindcss/cli -i app.css -o public/output.css",
+    "deploy:cors": "gsutil cors set cors.json gs://personalfinancemanagemen-46584.appspot.com"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/cli": "^4.1.16",
     "@tailwindcss/vite": "^4.1.16",
+    "axios": "^1.13.1",
     "dotenv": "^17.2.3",
     "firebase": "^12.5.0",
+    "lucide-react": "^0.552.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.66.0",

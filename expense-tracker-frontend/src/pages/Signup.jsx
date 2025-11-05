@@ -1,4 +1,4 @@
-import AuthLayout from "@/components/Layout/AuthLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
 import SignupForm from "@/components/Auth/SignupForm";
 
 const Signup = () => {

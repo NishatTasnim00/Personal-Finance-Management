@@ -5,6 +5,8 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
+import api from '@/lib/api';
+import { useState } from "react";
 
 const signupSchema = z
   .object({
@@ -20,34 +22,48 @@ const signupSchema = z
 
 const SignupForm = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const setUser = useAuthStore((s) => s.setUser);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     setError,
   } = useForm({
     resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-
-      setUser(userCredential.user);
-      navigate("/dashboard");
-    } catch (error) {
-      setError("root", {
-        message:
-          error.code === "auth/email-already-in-use"
-            ? "Email already in use"
-            : "Signup failed. Try again.",
+  const onSubmit = (data) => {
+    setLoading(true);
+    createUserWithEmailAndPassword(auth, data.email, data.password)
+      .then((userCredential) => {
+        const uid = userCredential.user.uid;
+        // Save user to backend
+        return api.post('/auth/register', {
+          uid,
+          email: data.email,
+          name: data.name,
+        });
+      })
+      .then(() => {
+        // Success: update auth store and redirect
+        setUser(auth.currentUser);
+        navigate("/dashboard");
+      })
+      .catch((error) => {
+        let message = "Signup failed. Please try again.";
+        if (error.code === "auth/email-already-in-use") {
+          message = "Email already in use.";
+        } else if (error.code?.includes?.("auth/")) {
+          message = error.message;
+        } else if (error.message) {
+          message = error.message;
+        }
+        setError("root", {message});
+      })
+      .finally(() => {
+        setLoading(false)
       });
-    }
   };
 
   return (
@@ -121,10 +137,10 @@ const SignupForm = () => {
           </div>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={loading}
             className="btn btn-primary w-full"
           >
-            {isSubmitting ? (
+            {loading ? (
               <span className="loading loading-spinner"></span>
             ) : (
               "Create Account"
