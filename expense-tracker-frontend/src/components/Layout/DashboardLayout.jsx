@@ -4,11 +4,11 @@ import { Outlet } from 'react-router-dom';
 export default function DashboardLayout() {
   return (
     <div
-      className="flex min-h-[calc(100vh-64px)] bg-amber-600"
+      className="flex min-h-[calc(100vh-64px)] bg-indigo-100"
       style={{ minHeight: 'calc(100vh - 64px)' }}
     >
       <SideBar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto p-10">
         <Outlet />
       </main>
     </div>
