@@ -18,7 +18,7 @@ html {
   --color-base-300: oklch(92.462% 0.001 247.838);
   --color-base-content: oklch(20% 0 0);
 
-  --color-primary: oklch(90% 0.063 306.703);
+  --color-primary: oklch(80% 0.063 306.703);
   --color-primary-content: oklch(49% 0.265 301.924);
   --color-secondary: oklch(89% 0.058 10.001);
   --color-secondary-content: oklch(51% 0.222 16.935);
@@ -71,7 +71,8 @@ html {
   --color-success-content: oklch(27% 0.046 192.524);
   --color-warning: oklch(90% 0.182 98.111);
   --color-warning-content: oklch(42% 0.095 57.708);
-  --color-error: oklch(73.7% 0.121 32.639);
+  /* --color-error: oklch(73.7% 0.121 32.639); */
+  --color-error: oklch(50% 0.213 27.518);
   --color-error-content: oklch(23.501% 0.096 290.329);
 
   --radius-selector: 1rem;
