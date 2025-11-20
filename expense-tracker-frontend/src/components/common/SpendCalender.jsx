@@ -13,32 +13,20 @@ const SpendCalender = forwardRef(
       disabled = false,
       maxDate,
       placeholder = "Select date",
-      label = "Date",
+      // label = "Date",
+      position = 'bottom-full',
     },
     ref
   ) => {
     const [open, setOpen] = useState(false);
+    console.log(selected);
 
     return (
-      <div ref={ref} className="relative w-full">
-        
-        {/* Floating label */}
-        <label
-          className={`
-            pointer-events-none absolute left-3 top-2 z-50 origin-[0]
-            -translate-y-4 scale-75 transform text-sm transition-all duration-200
-            ${selected || open ? "scale-75 -translate-y-4" : "scale-100 translate-y-0"}
-            ${error ? "text-error" : "text-primary"}
-          `}
-        >
-          {label}
-        </label>
-
-        {/* Trigger (looks like an input) */}
+      <div ref={ref} className="relative w-full h-full">
         <div
           className={`
-            flex h-12 items-center justify-between rounded-lg border bg-base-100 px-3 text-base
-            transition-all cursor-pointer
+            flex h-full items-center justify-between rounded-lg border bg-base-100 px-3 text-base
+            transition-all cursor-pointer relative  min-h-8
             ${error
               ? "border-error focus-within:ring-error/30"
               : "border-base-300 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/20"}
@@ -53,12 +41,12 @@ const SpendCalender = forwardRef(
               ? selected.toLocaleDateString("en-CA") // YYYY-MM-DD
               : placeholder}
           </span>
-          <Calendar className="h-5 w-5 text-base-content/60" />
+          <Calendar className='h-5 w-5 text-base-content/60' />
         </div>
 
         {/* Calendar popup */}
         {open && (
-          <div className="absolute bottom-full z-50 mt-1 w-full">
+          <div className={`absolute ${position} z-50 mt-1`}>
             <DatePicker
               selected={selected}
               onChange={(date) => {

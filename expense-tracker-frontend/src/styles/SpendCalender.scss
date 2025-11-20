@@ -22,16 +22,12 @@
   }
 
   .react-datepicker__day-name {
-    margin: 5px;
     font-weight: 600;
   }
 
   // Day cells
   .react-datepicker__day {
     margin: 3px;
-    width: 32px;
-    height: 32px;
-    line-height: 32px;
     border-radius: 6px;
 
     &:hover {
