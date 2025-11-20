@@ -1,5 +1,4 @@
 import AppRoutes from "@/routes/index.jsx";
-import { BrowserRouter as Router } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
 
 const App = () => {
@@ -14,7 +13,10 @@ const App = () => {
   }
 
   return (
+    <>
       <AppRoutes />
+      <div className="toast toast-bottom toast-end z-1000" />
+      </>
   );
 }
 
