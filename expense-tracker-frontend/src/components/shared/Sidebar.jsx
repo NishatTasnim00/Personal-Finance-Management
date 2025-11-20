@@ -5,12 +5,11 @@ import { Menu, X, LayoutDashboard, BanknoteArrowUp, BanknoteArrowDown  } from "l
 import useAuthStore from "@/store/useAuthStore";
 
 const navItems = [
-  { name: "Income",    path: "/income",    icon: <BanknoteArrowUp />},
-  { name: "Expence", path: "/expense", icon: <BanknoteArrowDown /> },
+  { name: "Income",    path: "/incomes",    icon: <BanknoteArrowUp />},
+  { name: "Expence", path: "/expenses", icon: <BanknoteArrowDown /> },
 ];
 
 export default function Sidebar() {
-  // local state – no props required
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user } = useAuthStore();
@@ -25,12 +24,10 @@ export default function Sidebar() {
       `}
     >
       {/* ---------- Header (toggle only) ---------- */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-4 pl-2">
         {/* Logo – visible only when open */}
         <div className={`flex items-center gap-2 ${isOpen ? "block" : "hidden"}`}>
-          <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-lg">
-            FT
-          </div>
+          <img src="/budget.png" alt="logo" className="h-8"/>
           <div>
             <div className="font-bold text-lg">FinanceTracker</div>
             <div className="text-xs opacity-70">Personal Finance</div>
@@ -40,10 +37,10 @@ export default function Sidebar() {
         {/* Toggle button – always visible */}
         <button
           onClick={() => setIsOpen((o) => !o)}
-          className="p-1 rounded-lg hover:bg-base-300 transition-colors"
+          className="px-3 py-2 rounded-lg hover:bg-neutral"
           aria-label={isOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
-          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          {isOpen ? <X className="w-5 h-5" /> : <Menu />}
         </button>
       </div>
 
@@ -58,7 +55,7 @@ export default function Sidebar() {
                   to={item.path}
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-lg transition-all
-                    ${active ? "bg-primary text-primary-content" : "hover:bg-base-300"}
+                    ${active ? "bg-primary text-primary-content" : "hover:bg-neutral"}
                   `}
                 >
                   {/* Icon – always shown */}
@@ -90,7 +87,6 @@ export default function Sidebar() {
               />
             </div>
           </div>
-
           {/* User text – shown only when open */}
           <div className={`flex-1 ${isOpen ? "block" : "hidden"}`}>
             <div className="font-medium truncate">{user?.displayName || "User"}</div>
