@@ -1,11 +1,13 @@
-import { CirclePlus, Banknote } from "lucide-react";
+import { CirclePlus, Banknote, Trash2 } from "lucide-react";
 import IncomeForm from "@/components/income/IncomeForm";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
-import { toastError } from "@/lib/toast";
+import { toastSuccess, toastError } from "@/lib/toast";
 import { useState } from "react";
 import FilterBar from "@/components/common/FilterBar";
 import { format } from "date-fns";
+import DeleteConfirmation from "@/components/common/DeleteConfirmation";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Incomes = () => {
   const [period, setPeriod] = useState("month");
@@ -13,6 +15,7 @@ const Incomes = () => {
   const [endDate, setEndDate] = useState("");
   const [source, setSource] = useState("");
   const [selectedIncome, setSelectedIncome] = useState({});
+  const queryClient = useQueryClient();
 
   // React Query: Automatically refetches when any filter changes
   const { data, isLoading, refetch } = useQuery({
@@ -44,12 +47,28 @@ const Incomes = () => {
     // Optional: keep previous data while loading new
     keepPreviousData: true,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => api.delete(`/incomes/${id}`),
+    onSuccess: () => {
+      toastSuccess("Income data Deleted successfully!");
+      document.getElementById("delete-confirmation-modal")?.close();
+      queryClient.invalidateQueries({ queryKey: ["incomes"] });
+    },
+    onError: () => toastError("Failed"),
+  });
+
+  const handleDelete = () => {
+    if (selectedIncome?._id) {
+      deleteMutation.mutate(selectedIncome._id);
+    }
+  };
   const incomes = data?.incomes || [];
   const formattedDate = (value) => {
     if (!value) return "N/A";
     return format(new Date(value), "MMM d, yyyy");
   };
-  const openModal = () => {
+  const openIncomeFormModal = () => {
     document.getElementById("income-form-modal")?.showModal();
   };
 
@@ -113,7 +132,7 @@ const Incomes = () => {
             <div
               onClick={() => {
                 setSelectedIncome(income);
-                openModal();
+                openIncomeFormModal();
               }}
               key={income._id}
               className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-200 min-h-50 cursor-pointer"
@@ -125,10 +144,24 @@ const Incomes = () => {
                 >
                   {income.icon || <Banknote />}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-lg capitalize truncate">
-                    {income.source || "Income"}
-                  </h3>
+                <div className="flex-1 min-w-0 relative">
+                  <div className="flex justify-between align-middle">
+                    <h3 className="font-bold text-lg capitalize truncate">
+                      {income.source || "Income"}
+                    </h3>
+                    <button
+                      className="cursor-help hover:text-error shadow-2xl hover:scale-110 transition-all z-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedIncome(income);
+                        document
+                          .getElementById("delete-confirmation-modal")
+                          .showModal();
+                      }}
+                    >
+                      <Trash2 />
+                    </button>
+                  </div>
                   <p className="text-sm text-base-content/60">
                     {income.description || "No description"}
                   </p>
@@ -152,7 +185,7 @@ const Incomes = () => {
       )}
       <button
         className="fixed bottom-6 right-6 btn btn-primary btn-circle btn-lg shadow-2xl hover:scale-110 transition-all z-50"
-        onClick={openModal}
+        onClick={openIncomeFormModal}
       >
         <CirclePlus className="w-8 h-8" />
       </button>
@@ -160,6 +193,12 @@ const Incomes = () => {
         onSuccess={refetch}
         selectedIncome={selectedIncome}
         setSelectedIncome={setSelectedIncome}
+      />
+      <DeleteConfirmation
+        title="Delete Income"
+        content={`income from ${selectedIncome?.source}`}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
       />
     </>
   );

@@ -175,7 +175,7 @@ export const updateIncome = async (req, res) => {
 export const deleteIncome = async (req, res) => {
   try {
     const income = await Income.findOneAndDelete({
-      id: req.params.id,
+      _id: req.params.id,
       userId: getUserId(req),
     });
 
