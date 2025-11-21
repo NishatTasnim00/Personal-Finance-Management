@@ -99,7 +99,7 @@ const Incomes = () => {
         ]}
         sourcePlaceholder="All Income Sources"
       />
-      <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
+      {incomes.length && <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
         <div className="mt-auto">
           <p className="text-3xl font-bold text-success">
             +$ {Number(data?.totalAmount).toLocaleString()}
@@ -112,14 +112,14 @@ const Incomes = () => {
             )} To ${formattedDate(incomes[0]?.date)}`}
           </p>
         </div>
-      </div>
+      </div>}
       {isLoading && !incomes.length ? (
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       ) : !incomes.length ? (
         <div className="text-center py-16">
-          <p className="text-xl text-base-content/70 mb-4">
+          <p className="text-2xl md:text-5xl text-base-content/20 mb-6">
             No incomes found for the selected filters.
           </p>
           <p className="text-base-content/50">
@@ -162,7 +162,7 @@ const Incomes = () => {
                       <Trash2 />
                     </button>
                   </div>
-                  <p className="text-sm text-base-content/60">
+                  <p className="text-sm text-base-content/60 wrap-break-word">
                     {income.description || "No description"}
                   </p>
                 </div>
