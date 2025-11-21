@@ -41,7 +41,7 @@ const FilterBar = ({
   const hasActiveFilter = filter !== "all" || from || to || source;
 
   return (
-    <div className={`bg-base-300 backdrop-blur-sm border-b border-base-300 sticky top-0 z-20 ${className}`}>
+    <div className={`bg-base-300 backdrop-blur-sm border-b border-base-300 sticky mb-10 top-0 z-20 ${className}`}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex flex-wrap gap-4 items-center justify-between">
 

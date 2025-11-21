@@ -3,7 +3,7 @@ import Login from "@/pages/Login";
 import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
-import Income from "@/components/Income";
+import Incomes from "@/components/Incomes";
 import Expense from "@/components/Expense";
 import useAuthStore from "@/store/useAuthStore";
 import AppLayout from "@/components/layout/AppLayout";
@@ -46,7 +46,7 @@ const AppRoutes = () => {
         >
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="income"    element={<Income />} />
+            <Route path="incomes"    element={<Incomes />} />
             <Route path="expense"   element={<Expense />} />
             <Route path="profile"   element={<Profile />} />
           </Route>

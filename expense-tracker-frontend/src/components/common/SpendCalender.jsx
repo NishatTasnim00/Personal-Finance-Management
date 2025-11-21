@@ -19,7 +19,6 @@ const SpendCalender = forwardRef(
     ref
   ) => {
     const [open, setOpen] = useState(false);
-    console.log(selected);
 
     return (
       <div ref={ref} className="relative w-full h-full">
