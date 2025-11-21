@@ -1,4 +1,3 @@
-// src/lib/toast.js
 export const showToast = (message, type = 'info') => {
   const toastContainer = document.querySelector('.toast');
   if (!toastContainer) {

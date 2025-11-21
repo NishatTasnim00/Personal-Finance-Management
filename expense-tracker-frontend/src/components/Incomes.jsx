@@ -12,6 +12,7 @@ const Incomes = () => {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [source, setSource] = useState("");
+  const [selectedIncome, setSelectedIncome] = useState({});
 
   // React Query: Automatically refetches when any filter changes
   const { data, isLoading, refetch } = useQuery({
@@ -43,11 +44,14 @@ const Incomes = () => {
     // Optional: keep previous data while loading new
     keepPreviousData: true,
   });
-  const incomes = data?.incomes || []
+  const incomes = data?.incomes || [];
   const formattedDate = (value) => {
-    if (!value) return "N/A"
-    return format(new Date(value), "MMM d, yyyy")
-  }
+    if (!value) return "N/A";
+    return format(new Date(value), "MMM d, yyyy");
+  };
+  const openModal = () => {
+    document.getElementById("income-form-modal")?.showModal();
+  };
 
   return (
     <>
@@ -82,9 +86,11 @@ const Incomes = () => {
             +$ {Number(data?.totalAmount).toLocaleString()}
           </p>
           <p className="text-lg mt-1">
-          <span>Earning from { data?.source }.</span>
-          <br />
-            {`From ${formattedDate(incomes[incomes.length - 1]?.date)} To ${formattedDate(incomes[0]?.date)}`}
+            <span>Earning from {data?.source}.</span>
+            <br />
+            {`From ${formattedDate(
+              incomes[incomes.length - 1]?.date
+            )} To ${formattedDate(incomes[0]?.date)}`}
           </p>
         </div>
       </div>
@@ -105,8 +111,12 @@ const Incomes = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 py-6">
           {incomes.map((income) => (
             <div
+              onClick={() => {
+                setSelectedIncome(income);
+                openModal();
+              }}
               key={income._id}
-              className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-200 min-h-50"
+              className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-200 min-h-50 cursor-pointer"
             >
               <div className="flex items-start gap-4">
                 <div
@@ -124,18 +134,17 @@ const Incomes = () => {
                   </p>
                 </div>
               </div>
-
               <div className="mt-auto">
-                  <p className="text-3xl font-bold text-success">
-                    +${Number(income.amount).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-base-content/50 mt-1">
-                    {new Date(income.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </p>
+                <p className="text-3xl font-bold text-success">
+                  +${Number(income.amount).toLocaleString()}
+                </p>
+                <p className="text-xs text-base-content/50 mt-1">
+                  {new Date(income.date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
           ))}
@@ -143,13 +152,15 @@ const Incomes = () => {
       )}
       <button
         className="fixed bottom-6 right-6 btn btn-primary btn-circle btn-lg shadow-2xl hover:scale-110 transition-all z-50"
-        onClick={() =>
-          document.getElementById("income-form-modal")?.showModal()
-        }
+        onClick={openModal}
       >
         <CirclePlus className="w-8 h-8" />
       </button>
-      <IncomeForm onSuccess={refetch} />
+      <IncomeForm
+        onSuccess={refetch}
+        selectedIncome={selectedIncome}
+        setSelectedIncome={setSelectedIncome}
+      />
     </>
   );
 };

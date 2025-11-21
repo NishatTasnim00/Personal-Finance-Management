@@ -45,7 +45,6 @@ export const createIncome = async (req, res) => {
 // READ ALL
 // src/controllers/incomeController.js
 export const getIncomes = async (req, res) => {
-  console.log(req.query);
   try {
     const userId = getUserId(req);
     const { 
@@ -92,7 +91,6 @@ export const getIncomes = async (req, res) => {
       default: // 'all'
         dateFilter = {};
     }
-console.log({ userId, ...dateFilter, source });
 
 // Build the final query object safely
     const query = {
@@ -133,8 +131,10 @@ export const updateIncome = async (req, res) => {
   try {
     const { source, icon, color, description, amount, date } = req.body;
 
+    console.log(req.body)
+
     const income = await Income.findOneAndUpdate(
-      { id: req.params.id, userId: getUserId(req) },
+      { _id: req.params.id, userId: getUserId(req) },
       {
         source: source?.trim(),
         icon: icon?.trim(),
@@ -145,6 +145,8 @@ export const updateIncome = async (req, res) => {
       },
       { new: true, runValidators: true }
     ).select('-userId -__v');
+
+    console.log(income);
 
     if (!income) {
       return errorResponse(res, 'Income not found', 404);
