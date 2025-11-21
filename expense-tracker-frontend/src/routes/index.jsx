@@ -4,7 +4,7 @@ import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import Incomes from "@/components/Incomes";
-import Expense from "@/components/Expense";
+import Expenses from "@/components/Expenses";
 import useAuthStore from "@/store/useAuthStore";
 import AppLayout from "@/components/layout/AppLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -47,7 +47,7 @@ const AppRoutes = () => {
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="incomes"    element={<Incomes />} />
-            <Route path="expense"   element={<Expense />} />
+            <Route path="expenses"   element={<Expenses />} />
             <Route path="profile"   element={<Profile />} />
           </Route>
 
