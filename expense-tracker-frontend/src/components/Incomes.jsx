@@ -5,17 +5,18 @@ import api from "@/lib/api";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { useState } from "react";
 import FilterBar from "@/components/common/FilterBar";
-import { format } from "date-fns";
+import { formatDate } from "@/lib/helper";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const Incomes = () => {
   const [period, setPeriod] = useState("month");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [source, setSource] = useState("");
   const [selectedIncome, setSelectedIncome] = useState({});
   const queryClient = useQueryClient();
+
 
   // React Query: Automatically refetches when any filter changes
   const { data, isLoading, refetch } = useQuery({
@@ -23,20 +24,21 @@ const Incomes = () => {
     queryFn: async () => {
       const params = new URLSearchParams();
 
+
       if (period && period !== "all" && period !== "custom") {
         params.append("period", period);
       }
 
       if (period === "custom") {
-        if (startDate) params.append("startDate", startDate);
-        if (endDate) params.append("endDate", endDate);
+        if (startDate) params.append("startDate", startDate.toISOString().split('T')[0]);
+        if (endDate) params.append("endDate", endDate.toISOString().split('T')[0]);
       }
 
       if (source) {
         params.append("source", source);
       }
 
-      const url = `/incomes?${params.toString()}`;
+      const url = `/incomes?${params}`;
       const response = await api.get(url);
 
       return response?.result;
@@ -64,10 +66,7 @@ const Incomes = () => {
     }
   };
   const incomes = data?.incomes || [];
-  const formattedDate = (value) => {
-    if (!value) return "N/A";
-    return format(new Date(value), "MMM d, yyyy");
-  };
+
   const openIncomeFormModal = () => {
     document.getElementById("income-form-modal")?.showModal();
   };
@@ -101,15 +100,14 @@ const Incomes = () => {
       />
       {incomes.length && <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
         <div className="mt-auto">
+          <h3 className="text-3xl text-primary">Total Income</h3>
           <p className="text-3xl font-bold text-success">
             +$ {Number(data?.totalAmount).toLocaleString()}
           </p>
           <p className="text-lg mt-1">
             <span>Earning from {data?.source}.</span>
             <br />
-            {`From ${formattedDate(
-              incomes[incomes.length - 1]?.date
-            )} To ${formattedDate(incomes[0]?.date)}`}
+            {`From ${formatDate(data?.searchStartDate)} To ${formatDate(data?.searchEndDate)}`}
           </p>
         </div>
       </div>}
