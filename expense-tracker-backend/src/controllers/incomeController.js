@@ -45,83 +45,151 @@ export const createIncome = async (req, res) => {
 // READ ALL
 // src/controllers/incomeController.js
 export const getIncomes = async (req, res) => {
+
   try {
     const userId = getUserId(req);
-    const { 
-      period = 'month',     // all | month | week | year | custom
-      startDate, 
+    const {
+      period = 'month',
+      startDate,
       endDate,
       source
-
     } = req.query;
 
+    // ———————— Always correct Bangladesh Time (Asia/Dhaka) ————————
+    const nowInBD = new Date().toLocaleString("en-CA", {
+      timeZone: "Asia/Dhaka",
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    const nowBD = new Date(nowInBD); // Current time in Bangladesh
+
+    // Today at 00:00:00 in Bangladesh
+    const todayStartBD = new Date(
+      nowBD.getFullYear(),
+      nowBD.getMonth(),
+      nowBD.getDate()
+    );
+
+    // Auto-switch to custom if dates provided
+    let activePeriod = period.toString().trim().toLowerCase();
+    if (startDate && endDate) {
+      activePeriod = 'custom';
+    }
+
+    let searchStartDate = null;
+    let searchEndDate = null;
     let dateFilter = {};
 
-    const now = new Date();
-    const startOfDay = new Date(now.setHours(0,0,0,0));
-
-    switch (period) {
+    switch (activePeriod) {
       case 'today':
-        dateFilter = { date: { $gte: startOfDay } };
+        searchStartDate = todayStartBD;
+        searchEndDate = nowBD;
+        dateFilter = { date: { $gte: todayStartBD } };
         break;
+
       case 'week':
-        const startOfWeek = new Date(startOfDay);
-        startOfWeek.setDate(startOfDay.getDate() - startOfDay.getDay());
-        dateFilter = { date: { $gte: startOfWeek } };
+        // Bangladesh week starts on SATURDAY
+        const dayOfWeek = nowBD.getDay(); // 0=Sunday, 6=Saturday
+        const daysBackToSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
+
+        const weekStart = new Date(todayStartBD);
+        weekStart.setDate(todayStartBD.getDate() - daysBackToSaturday);
+
+        searchStartDate = weekStart;
+        searchEndDate = nowBD;
+        dateFilter = { date: { $gte: weekStart } };
         break;
+
       case 'month':
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        dateFilter = { date: { $gte: startOfMonth } };
+        const monthStart = new Date(nowBD.getFullYear(), nowBD.getMonth(), 1);
+        searchStartDate = monthStart;
+        searchEndDate = nowBD;
+        dateFilter = { date: { $gte: monthStart } };
         break;
+
       case 'year':
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        dateFilter = { date: { $gte: startOfYear } };
+        const yearStart = new Date(nowBD.getFullYear(), 0, 1);
+        searchStartDate = yearStart;
+        searchEndDate = nowBD;
+        dateFilter = { date: { $gte: yearStart } };
         break;
+
       case 'custom':
         if (!startDate || !endDate) {
-          return errorResponse(res, 'startDate and endDate required.', 400);
+          return errorResponse(res, 'startDate and endDate are required.', 400);
         }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return errorResponse(res, 'Invalid date format. Use YYYY-MM-DD', 400);
+        }
+
+        searchStartDate = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
+        searchEndDate = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999));
+
         dateFilter = {
           date: {
-            $gte: new Date(startDate),
-            $lte: new Date(new Date(endDate).setHours(23,59,59,999))
+            $gte: searchStartDate,
+            $lte: searchEndDate
           }
         };
         break;
-      default: // 'all'
+
+      case 'all':
+      default:
+        searchStartDate = null;
+        searchEndDate = null;
         dateFilter = {};
+        break;
     }
 
-// Build the final query object safely
+    // Build MongoDB query
     const query = {
       userId,
-      ...dateFilter,
+      ...dateFilter
     };
 
-    // Only add source filter if it's provided and not empty
-    if (source && source.trim() !== '') {
-      query.source = source.trim(); // exact match
-      // Or use case-insensitive: query.source = { $regex: new RegExp(`^${source.trim()}$`, 'i') };
+    if (source && source.toString().trim() !== '') {
+      query.source = source.toString().trim();
     }
 
+    // Fetch incomes
     const incomes = await Income.find(query)
       .sort({ date: -1 })
       .lean();
 
-    // Format dates
-    const formatted = incomes.map(income => ({
-      ...income,
-      date: income.date.toISOString().split('T')[0],
+    const formattedIncomes = incomes.map(inc => ({
+      ...inc,
+      date: new Date(inc.date).toISOString().split('T')[0]
     }));
 
+    const totalAmount = formattedIncomes.reduce((sum, inc) => sum + inc.amount, 0);
+
+    // Helper to format date as YYYY-MM-DD
+    const format = (date) => date ? new Date(date).toISOString().split('T')[0] : null;
+
     successResponse(res, {
-      incomes: formatted,
-      count: formatted.length,
-      period,
-      source: source || 'all sources',
-      totalAmount: formatted.reduce((sum, income) => sum + income.amount, 0)
+      incomes: formattedIncomes,
+      count: formattedIncomes.length,
+      totalAmount,
+      period: activePeriod,
+      source: source?.toString().trim() || 'all sources',
+      searchStartDate: format(searchStartDate),
+      searchEndDate: format(searchEndDate),
+      dateRange: searchStartDate && searchEndDate
+        ? `${format(searchStartDate)} to ${format(searchEndDate)}`
+        : 'All time'
     });
+
   } catch (err) {
+    console.error('getIncomes error:', err);
     errorResponse(res, 'Server error', 500);
   }
 };
@@ -130,8 +198,6 @@ export const getIncomes = async (req, res) => {
 export const updateIncome = async (req, res) => {
   try {
     const { source, icon, color, description, amount, date } = req.body;
-
-    console.log(req.body)
 
     const income = await Income.findOneAndUpdate(
       { _id: req.params.id, userId: getUserId(req) },
