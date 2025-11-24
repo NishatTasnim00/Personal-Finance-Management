@@ -136,7 +136,7 @@ const FilterBar = ({
                   placeholder="End Date"
                   position="right-0"
                 />
-                <button className="btn h-8 btn-secondary">Set</button> //TODO: Implement later
+                <button className="btn h-8 btn-secondary">Set</button> {/* TODO: Implement later */}
               </div>
             )}
           </div>
