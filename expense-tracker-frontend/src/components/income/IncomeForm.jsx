@@ -44,11 +44,11 @@ const IncomeForm = ({ onSuccess, selectedIncome, setSelectedIncome }) => {
       source: selectedIncome?.source || "",
       amount: selectedIncome?.amount || "",
       description: selectedIncome?.description || "",
-      date: selectedIncome?.date ? new Date(selectedIncome.date) : new Date(),
+      date: selectedIncome ? new Date(selectedIncome?.date) : new Date(),
     },
   });
   
-  const selectedDate = watch("date");
+  const selectedDate = new Date();
 
   // React Query Mutation
   const mutation = useMutation({
