@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Calendar, Filter as FilterIcon, X } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import SpendCalender from "@/components/common/SpendCalender";
@@ -25,15 +24,11 @@ const FilterBar = ({
   setTo,
   source,
   setSource,
-  sourceOptions = [], // e.g., ["salary", "freelance", "investment", "gift"]
+  sourceOptions = [], 
   sourcePlaceholder = "All Sources",
-  onApplyFilters, // callback when filters change
+  onApplyCustom, 
   className = "",
 }) => {
-  // Sync URL params whenever filters change
-  useEffect(() => {
-    onApplyFilters?.();
-  }, [filter, from, to, source]);
 
   const handleClear = () => {
     setFilter("all");
@@ -136,7 +131,7 @@ const FilterBar = ({
                   placeholder="End Date"
                   position="right-0"
                 />
-                <button className="btn h-8 btn-secondary">Set</button> {/* TODO: Implement later */}
+                <button className="btn h-8 btn-secondary" onClick={onApplyCustom}>Set</button> {/* TODO: Implement later */}
               </div>
             )}
           </div>

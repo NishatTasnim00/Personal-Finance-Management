@@ -1,6 +1,6 @@
 import { CirclePlus, Banknote, Trash2 } from "lucide-react";
 import IncomeForm from "@/components/income/IncomeForm";
-import { useQuery } from "@tanstack/react-query";
+import { useGetIncomes } from "@/hooks/income";
 import api from "@/lib/api";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { useState } from "react";
@@ -18,36 +18,12 @@ const Incomes = () => {
   const queryClient = useQueryClient();
 
 
-  // React Query: Automatically refetches when any filter changes
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ["incomes", period, startDate, endDate, source],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-
-
-      if (period && period !== "all" && period !== "custom") {
-        params.append("period", period);
-      }
-
-      if (period === "custom") {
-        if (startDate) params.append("startDate", startDate.toISOString().split('T')[0]);
-        if (endDate) params.append("endDate", endDate.toISOString().split('T')[0]);
-      }
-
-      if (source) {
-        params.append("source", source);
-      }
-
-      const url = `/incomes?${params}`;
-      const response = await api.get(url);
-
-      return response?.result;
-    },
-    onError: (err) => {
-      toastError(err.message || "Failed to fetch incomes!");
-    },
-    // Optional: keep previous data while loading new
-    keepPreviousData: true,
+const { data, isLoading, refetch } = useGetIncomes({
+    period,
+    startDate,
+    endDate,
+    source,
+    enabled: period !== "custom",
   });
 
   const deleteMutation = useMutation({
@@ -69,6 +45,18 @@ const Incomes = () => {
 
   const openIncomeFormModal = () => {
     document.getElementById("income-form-modal")?.showModal();
+  };
+
+  const handleApplyCustom = () => {
+    if (!startDate || !endDate) {
+      toastError("Please pick both dates");
+      return;
+    }
+    if (startDate > endDate) {
+      toastError("Start date cannot be after end date");
+      return;
+    }
+    refetch(); // manual fetch for custom range
   };
 
   return (
@@ -96,6 +84,7 @@ const Incomes = () => {
           "bonus",
           "other",
         ]}
+        onApplyCustom={handleApplyCustom}
         sourcePlaceholder="All Income Sources"
       />
       {incomes.length && <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
