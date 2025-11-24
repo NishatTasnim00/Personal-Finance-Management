@@ -1,12 +1,13 @@
-// src/components/shared/Sidebar.tsx
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, LayoutDashboard, BanknoteArrowUp, BanknoteArrowDown  } from "lucide-react";   // any icon library you use
+import { Menu, X, BanknoteArrowUp, BanknoteArrowDown, PiggyBank  } from "lucide-react";
 import useAuthStore from "@/store/useAuthStore";
 
 const navItems = [
   { name: "Income",    path: "/incomes",    icon: <BanknoteArrowUp />},
   { name: "Expence", path: "/expenses", icon: <BanknoteArrowDown /> },
+  { name: "Budget", path: "/dashboard/budgets", icon: <PiggyBank /> },
+
 ];
 
 export default function Sidebar() {

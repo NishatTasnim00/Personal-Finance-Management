@@ -8,6 +8,7 @@ import Expenses from "@/components/Expenses";
 import useAuthStore from "@/store/useAuthStore";
 import AppLayout from "@/components/layout/AppLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import Budgets from "@/pages/dashboard/Budgets";
 
 const AppRoutes = () => {
   const { user, loading } = useAuthStore();
