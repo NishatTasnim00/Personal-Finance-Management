@@ -12,6 +12,7 @@
     "deploy:cors": "gsutil cors set cors.json gs://personalfinancemanagemen-46584.appspot.com"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@tailwindcss/cli": "^4.1.16",
     "@tailwindcss/vite": "^4.1.16",
@@ -26,6 +27,7 @@
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.66.0",
     "react-router-dom": "^7.9.5",
+    "react-select": "^5.10.2",
     "sass": "^1.94.0",
     "zod": "^4.1.12",
     "zustand": "^5.0.8"
