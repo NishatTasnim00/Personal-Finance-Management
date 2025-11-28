@@ -1,15 +1,14 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: false; 
+  themes: false;
 }
 html {
   transition: background-color 0.3s, color 0.3s;
 }
 
-
 @plugin "daisyui/theme" {
   name: "pastel";
-  default: true;          
+  default: true;
   prefersdark: false;
   color-scheme: "light";
 
@@ -48,7 +47,7 @@ html {
 
 @plugin "daisyui/theme" {
   name: "synthwave";
-  prefersdark: true;      
+  prefersdark: true;
   color-scheme: "dark";
 
   --color-base-100: oklch(15% 0.09 281.288);
@@ -83,4 +82,8 @@ html {
   --border: 1px;
   --depth: 0;
   --noise: 0;
+}
+
+.add_button {
+  @apply fixed bottom-6 right-6 btn btn-primary btn-circle btn-lg shadow-2xl hover:scale-110 transition-all z-50;
 }

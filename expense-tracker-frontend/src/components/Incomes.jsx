@@ -171,7 +171,7 @@ const { data, isLoading, refetch } = useGetIncomes({
         </div>
       )}
       <button
-        className="fixed bottom-6 right-6 btn btn-primary btn-circle btn-lg shadow-2xl hover:scale-110 transition-all z-50"
+        className="add_button"
         onClick={openIncomeFormModal}
       >
         <CirclePlus className="w-8 h-8" />
