@@ -43,7 +43,7 @@ const IncomeForm = ({ onSuccess, selectedIncome, setSelectedIncome }) => {
     },
   });
   const dateValue = watch("date");
-  const selectedDateForCalendar = !dateValue ? new Date() : new Date(dateValue);
+  const selectedDateForCalendar = (dateValue !== 'Invalid Date') ? new Date() : new Date(dateValue);
 
   // React Query Mutation
   const mutation = useMutation({

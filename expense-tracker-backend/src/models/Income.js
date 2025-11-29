@@ -32,7 +32,6 @@ const incomeSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: true,
     },
     userId: {
       type: String,

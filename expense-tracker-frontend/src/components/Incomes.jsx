@@ -66,8 +66,8 @@ const { data, isLoading, refetch } = useGetIncomes({
         setFilter={(newPeriod) => {
           setPeriod(newPeriod);
           if (newPeriod !== "custom") {
-            setStartDate("");
-            setEndDate("");
+            setStartDate(null);
+            setEndDate(null);
           }
         }}
         from={startDate}
