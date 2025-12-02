@@ -84,7 +84,7 @@ const IncomeForm = ({
     if (selectedTransaction) {
       reset({
         source: selectedTransaction.source || "",
-        amount: selectedTransaction.amount || "",
+        amount: selectedTransaction.amount || 0,
         description: selectedTransaction.description || "",
         date: selectedTransaction
         ? new Date(selectedTransaction?.date)
@@ -94,7 +94,7 @@ const IncomeForm = ({
     } else {
       reset({
         source: "",
-        amount: "",
+        amount: 0,
         description: "",
         date: new Date(),
       });
