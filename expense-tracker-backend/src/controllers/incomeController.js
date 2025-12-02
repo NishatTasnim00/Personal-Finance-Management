@@ -49,7 +49,7 @@ export const getIncomes = async (req, res) => {
   try {
     const userId = getUserId(req);
     const {
-      period = 'month',
+      period = 'all',
       startDate,
       endDate,
       source
