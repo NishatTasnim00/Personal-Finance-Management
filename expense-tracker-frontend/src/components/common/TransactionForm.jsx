@@ -235,7 +235,7 @@ const IncomeForm = ({
           <button onClick={onClose}>close</button>
         </form>
       </dialog>
-      <style jsx>{`
+      <style jsx="true">{`
         .react-select__control {
           background-color: var(--color-base-100) !important;
           border: none;
