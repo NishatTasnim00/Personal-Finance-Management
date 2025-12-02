@@ -183,9 +183,8 @@ const IncomeForm = ({
                 <span className="label-text font-medium">Amount *</span>
               </label>
               <input
-                {...register("amount", { valueAsNumber: true })}
+                {...register("amount")}
                 type="number"
-                step="0.01"
                 min="0"
                 placeholder="0.00"
                 className={`input input-bordered w-full ${
