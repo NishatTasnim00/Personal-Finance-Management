@@ -1,13 +1,12 @@
-import { CirclePlus, Banknote, Trash2 } from "lucide-react";
-import IncomeForm from "@/components/income/IncomeForm";
-import { useGetIncomes } from "@/hooks/income";
-import api from "@/lib/api";
-import { toastSuccess, toastError } from "@/lib/toast";
+import { CirclePlus, Banknote, Trash2, X } from "lucide-react";
+import TransactionForm from "@/components/common/TransactionForm";
+import { useGetIncomes, useUpdateIncome, useDeleteIncome } from "@/hooks/income";
+import { toastError } from "@/lib/toast";
 import { useState } from "react";
 import FilterBar from "@/components/common/FilterBar";
 import { formatDate } from "@/lib/helper";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { defaultIncomeSources } from "@/lib/helper";
 
 const Incomes = () => {
   const [period, setPeriod] = useState("month");
@@ -15,38 +14,16 @@ const Incomes = () => {
   const [endDate, setEndDate] = useState(null);
   const [source, setSource] = useState("");
   const [selectedIncome, setSelectedIncome] = useState({});
-  const queryClient = useQueryClient();
+  const UpdateMutation = useUpdateIncome();
+  const deleteMutation = useDeleteIncome();
 
-
-const { data, isLoading, refetch } = useGetIncomes({
+  const { data, isLoading, refetch } = useGetIncomes({
     period,
     startDate,
     endDate,
     source,
     enabled: period !== "custom",
   });
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => api.delete(`/incomes/${id}`),
-    onSuccess: () => {
-      toastSuccess("Income data Deleted successfully!");
-      document.getElementById("delete-confirmation-modal")?.close();
-      queryClient.invalidateQueries({ queryKey: ["incomes"] });
-    },
-    onError: () => toastError("Failed"),
-  });
-
-  const handleDelete = () => {
-    if (selectedIncome?._id) {
-      deleteMutation.mutate(selectedIncome._id);
-    }
-  };
-  const incomes = data?.incomes || [];
-
-  const openIncomeFormModal = () => {
-    document.getElementById("income-form-modal")?.showModal();
-  };
-
   const handleApplyCustom = () => {
     if (!startDate || !endDate) {
       toastError("Please pick both dates");
@@ -56,7 +33,38 @@ const { data, isLoading, refetch } = useGetIncomes({
       toastError("Start date cannot be after end date");
       return;
     }
-    refetch(); // manual fetch for custom range
+    refetch()
+  };
+  const incomes = data?.incomes || [];
+
+  const closeTransactionModal = () => {
+    document.getElementById("income-form-modal")?.close();
+    setSelectedIncome(null);
+  };
+
+  const handleIncomeSubmit = (formData) => {
+
+    const isEdit = !!selectedIncome?._id;
+
+    UpdateMutation.mutate({
+      isEdit,
+      id: selectedIncome?._id,
+      formData,
+    });
+    if (!UpdateMutation.isPending) {
+      refetch();
+      closeTransactionModal();
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedIncome?._id) {
+      deleteMutation.mutate(selectedIncome._id);
+    }
+  };
+
+  const openTransactionFormModal = () => {
+    document.getElementById("income-form-modal")?.showModal();
   };
 
   return (
@@ -87,19 +95,23 @@ const { data, isLoading, refetch } = useGetIncomes({
         onApplyCustom={handleApplyCustom}
         sourcePlaceholder="All Income Sources"
       />
-      {incomes.length && <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
-        <div className="mt-auto">
-          <h3 className="text-3xl text-primary">Total Income</h3>
-          <p className="text-3xl font-bold text-success">
-            +$ {Number(data?.totalAmount).toLocaleString()}
-          </p>
-          <p className="text-lg mt-1">
-            <span>Earning from {data?.source}.</span>
-            <br />
-            {`From ${formatDate(data?.searchStartDate)} To ${formatDate(data?.searchEndDate)}`}
-          </p>
+      {incomes.length && (
+        <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
+          <div className="mt-auto">
+            <h3 className="text-3xl text-primary">Total Income</h3>
+            <p className="text-3xl font-bold text-success">
+              +$ {Number(data?.totalAmount).toLocaleString()}
+            </p>
+            <p className="text-lg mt-1">
+              <span>Earning from {data?.source}.</span>
+              <br />
+              {`From ${formatDate(data?.searchStartDate)} To ${formatDate(
+                data?.searchEndDate
+              )}`}
+            </p>
+          </div>
         </div>
-      </div>}
+      )}
       {isLoading && !incomes.length ? (
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg"></span>
@@ -119,7 +131,7 @@ const { data, isLoading, refetch } = useGetIncomes({
             <div
               onClick={() => {
                 setSelectedIncome(income);
-                openIncomeFormModal();
+                openTransactionFormModal();
               }}
               key={income._id}
               className="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-200 min-h-50 cursor-pointer"
@@ -170,16 +182,17 @@ const { data, isLoading, refetch } = useGetIncomes({
           ))}
         </div>
       )}
-      <button
-        className="add_button"
-        onClick={openIncomeFormModal}
-      >
+      <button className="add_button" onClick={openTransactionFormModal}>
         <CirclePlus className="w-8 h-8" />
       </button>
-      <IncomeForm
-        onSuccess={refetch}
-        selectedIncome={selectedIncome}
-        setSelectedIncome={setSelectedIncome}
+      <TransactionForm
+        type={"income"}
+        sources={defaultIncomeSources}
+        onSubmit={handleIncomeSubmit}
+        selectedTransaction={selectedIncome}
+        setSelectedTransaction={setSelectedIncome}
+        isSubmitting={UpdateMutation.pending}
+        onClose={closeTransactionModal}
       />
       <DeleteConfirmation
         title="Delete Income"
