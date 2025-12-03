@@ -9,7 +9,7 @@ import { useState } from "react";
 
 const getSchema = (type) => {
   const base = {
-    amount: z
+    amount: z.coerce
       .number({ invalid_type_error: "Amount must be a number" })
       .positive("Amount must be greater than 0"),
     date: z.date({
@@ -185,7 +185,9 @@ const IncomeForm = ({
                 <span className="label-text font-medium">Amount *</span>
               </label>
               <input
-                {...register("amount")}
+                {...register("amount", {
+                  valueAsNumber: true,
+                })}
                 type="number"
                 min="0"
                 placeholder="0.00"
