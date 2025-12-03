@@ -105,7 +105,7 @@ const Incomes = () => {
             <p className="text-lg mt-1">
               <span>Earning from {data?.source}.</span>
               <br />
-              {`From ${formatDate(data?.searchStartDate)} To ${formatDate(
+              {`From ${formatDate(data?.searchStartDate || incomes[incomes.length - 1].date)} To ${formatDate(
                 data?.searchEndDate
               )}`}
             </p>

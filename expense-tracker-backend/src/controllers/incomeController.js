@@ -45,135 +45,127 @@ export const createIncome = async (req, res) => {
 // READ ALL
 // src/controllers/incomeController.js
 export const getIncomes = async (req, res) => {
-
   try {
     const userId = getUserId(req);
-    const {
-      period = 'all',
-      startDate,
-      endDate,
-      source
-    } = req.query;
+    const { period = 'all', startDate, endDate, source } = req.query;
 
-    // ———————— Always correct Bangladesh Time (Asia/Dhaka) ————————
-    const nowInBD = new Date().toLocaleString("en-CA", {
-      timeZone: "Asia/Dhaka",
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    const nowBD = new Date(nowInBD); // Current time in Bangladesh
-
-    // Today at 00:00:00 in Bangladesh
-    const todayStartBD = new Date(
-      nowBD.getFullYear(),
-      nowBD.getMonth(),
-      nowBD.getDate()
-    );
-
-    // Auto-switch to custom if dates provided
+    // Auto-switch to custom if dates are provided
     let activePeriod = period.toString().trim().toLowerCase();
     if (startDate && endDate) {
       activePeriod = 'custom';
     }
 
-    let searchStartDate = null;
-    let searchEndDate = null;
     let dateFilter = {};
 
+    // Use UTC-based date calculations (standard & reliable)
+    const now = new Date(); // Current UTC time
+
     switch (activePeriod) {
-      case 'today':
-        searchStartDate = todayStartBD;
-        searchEndDate = nowBD;
-        dateFilter = { date: { $gte: todayStartBD } };
+      case 'today': {
+        const startOfDay = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+        );
+        dateFilter = { date: { $gte: startOfDay } };
         break;
+      }
 
-      case 'week':
-        // Bangladesh week starts on SATURDAY
-        const dayOfWeek = nowBD.getDay(); // 0=Sunday, 6=Saturday
-        const daysBackToSaturday = dayOfWeek === 6 ? 0 : 6 - dayOfWeek;
-
-        const weekStart = new Date(todayStartBD);
-        weekStart.setDate(todayStartBD.getDate() - daysBackToSaturday);
-
-        searchStartDate = weekStart;
-        searchEndDate = nowBD;
-        dateFilter = { date: { $gte: weekStart } };
+      case 'week': {
+        // Week starts on Sunday (ISO: Monday, but many prefer Sunday)
+        const day = now.getUTCDay(); // 0 = Sunday
+        const startOfWeek = new Date(
+          Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate() - day
+          )
+        );
+        dateFilter = { date: { $gte: startOfWeek } };
         break;
+      }
 
-      case 'month':
-        const monthStart = new Date(nowBD.getFullYear(), nowBD.getMonth(), 1);
-        searchStartDate = monthStart;
-        searchEndDate = nowBD;
-        dateFilter = { date: { $gte: monthStart } };
+      case 'month': {
+        const startOfMonth = new Date(
+          Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+        );
+        dateFilter = { date: { $gte: startOfMonth } };
         break;
+      }
 
-      case 'year':
-        const yearStart = new Date(nowBD.getFullYear(), 0, 1);
-        searchStartDate = yearStart;
-        searchEndDate = nowBD;
-        dateFilter = { date: { $gte: yearStart } };
+      case 'year': {
+        const startOfYear = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+        dateFilter = { date: { $gte: startOfYear } };
         break;
+      }
 
-      case 'custom':
+      case 'custom': {
         if (!startDate || !endDate) {
-          return errorResponse(res, 'startDate and endDate are required.', 400);
+          return errorResponse(
+            res,
+            'startDate and endDate are required for custom period',
+            400
+          );
         }
 
         const start = new Date(startDate);
         const end = new Date(endDate);
 
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        if (isNaN(start) || isNaN(end)) {
           return errorResponse(res, 'Invalid date format. Use YYYY-MM-DD', 400);
         }
 
-        searchStartDate = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
-        searchEndDate = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999));
+        // Start: 00:00:00 UTC, End: 23:59:59.999 UTC
+        const startUTC = new Date(
+          Date.UTC(start.getFullYear(), start.getMonth(), start.getDate())
+        );
+        const endUTC = new Date(
+          Date.UTC(
+            end.getFullYear(),
+            end.getMonth(),
+            end.getDate(),
+            23,
+            59,
+            59,
+            999
+          )
+        );
 
         dateFilter = {
-          date: {
-            $gte: searchStartDate,
-            $lte: searchEndDate
-          }
+          date: { $gte: startUTC, $lte: endUTC },
         };
         break;
+      }
 
       case 'all':
       default:
-        searchStartDate = null;
-        searchEndDate = null;
         dateFilter = {};
         break;
     }
 
-    // Build MongoDB query
-    const query = {
-      userId,
-      ...dateFilter
-    };
-
-    if (source && source.toString().trim() !== '') {
+    // Build final query
+    const query = { userId, ...dateFilter };
+    if (source && source.toString().trim()) {
       query.source = source.toString().trim();
     }
 
     // Fetch incomes
-    const incomes = await Income.find(query)
-      .sort({ date: -1 })
-      .lean();
+    const incomes = await Income.find(query).sort({ date: -1 }).lean();
 
-    const formattedIncomes = incomes.map(inc => ({
+    const formattedIncomes = incomes.map((inc) => ({
       ...inc,
-      date: new Date(inc.date).toISOString().split('T')[0]
+      date: new Date(inc.date).toISOString().split('T')[0], // YYYY-MM-DD
     }));
 
-    const totalAmount = formattedIncomes.reduce((sum, inc) => sum + inc.amount, 0);
+    const totalAmount = formattedIncomes.reduce(
+      (sum, inc) => sum + (inc.amount || 0),
+      0
+    );
 
-    // Helper to format date as YYYY-MM-DD
-    const format = (date) => date ? new Date(date).toISOString().split('T')[0] : null;
+    // Helper
+    const format = (date) =>
+      date ? new Date(date).toISOString().split('T')[0] : null;
+
+    const searchStartDate = dateFilter.date?.$gte || null;
+    const searchEndDate = dateFilter.date?.$lte || format(now);
 
     successResponse(res, {
       incomes: formattedIncomes,
@@ -183,11 +175,11 @@ export const getIncomes = async (req, res) => {
       source: source?.toString().trim() || 'all sources',
       searchStartDate: format(searchStartDate),
       searchEndDate: format(searchEndDate),
-      dateRange: searchStartDate && searchEndDate
-        ? `${format(searchStartDate)} to ${format(searchEndDate)}`
-        : 'All time'
+      dateRange:
+        searchStartDate && searchEndDate
+          ? `${format(searchStartDate)} to ${format(searchEndDate)}`
+          : 'All time',
     });
-
   } catch (err) {
     console.error('getIncomes error:', err);
     errorResponse(res, 'Server error', 500);
@@ -211,8 +203,6 @@ export const updateIncome = async (req, res) => {
       },
       { new: true, runValidators: true }
     ).select('-userId -__v');
-
-    console.log(income);
 
     if (!income) {
       return errorResponse(res, 'Income not found', 404);
