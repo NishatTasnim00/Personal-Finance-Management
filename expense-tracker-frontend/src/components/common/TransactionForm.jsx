@@ -12,7 +12,10 @@ const getSchema = (type) => {
     amount: z
       .number({ invalid_type_error: "Amount must be a number" })
       .positive("Amount must be greater than 0"),
-    date: z.date({ required_error: "Date is required" }),
+    date: z.date({
+      required_error: "Date is required",
+      invalid_type_error: "Please select a valid date",
+    }),
     description: z.string().max(100, "Max 100 characters").optional(),
   };
 
@@ -56,8 +59,7 @@ const IncomeForm = ({
 }) => {
   const isEditMode = !!selectedTransaction;
   const [selectedOption, setSelectedOption] = useState(null);
-  const [selectedDate, setSselectedDate] = useState(new Date());
-
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const {
     register,
@@ -72,32 +74,32 @@ const IncomeForm = ({
       source: selectedTransaction?.source || "",
       amount: selectedTransaction?.amount || "",
       description: selectedTransaction?.description || "",
-      date: new Date(selectedTransaction?.date)
-
+      date: new Date(selectedTransaction?.date),
     },
   });
-  const dateValue = watch("date");
-  const selectedDateForCalendar = !dateValue || new Date()
-
   // Reset form when selectedTransaction changes (edit mode)
   useEffect(() => {
     if (selectedTransaction) {
+      const transactionDate = selectedTransaction.date
+        ? new Date(selectedTransaction.date)
+        : new Date();
       reset({
         source: selectedTransaction.source || "",
         amount: selectedTransaction.amount || 0,
         description: selectedTransaction.description || "",
-        date: selectedTransaction
-        ? new Date(selectedTransaction?.date)
-        : new Date(),
+        date: transactionDate,
       });
-      setSelectedOption(null)
+      setSelectedDate(transactionDate); // also keep calendar in sync
+      setSelectedOption(null);
     } else {
+      const today = new Date();
       reset({
         source: "",
         amount: 0,
         description: "",
-        date: new Date(),
+        date: today,
       });
+      setSelectedDate(today);
     }
   }, [selectedTransaction, reset, onClose]);
 
@@ -131,7 +133,7 @@ const IncomeForm = ({
               </label>
               <Select
                 options={options}
-        defaultValue={selectedOption}
+                defaultValue={selectedOption}
                 onChange={(option) => setValue("source", option.value)}
                 placeholder="Select Source"
                 classNamePrefix="react-select"
@@ -203,7 +205,9 @@ const IncomeForm = ({
               </label>
               <SpendCalender
                 selected={selectedDate}
-                onChange={(date) =>{ setSselectedDate(date),setValue("date", date || new Date())}}
+                onChange={(date) => {
+                  setSelectedDate(date), setValue("date", date || new Date());
+                }}
                 error={!!errors.date}
                 maxDate={new Date()}
               />
