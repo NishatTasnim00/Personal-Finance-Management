@@ -13,7 +13,7 @@ const Incomes = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [source, setSource] = useState("");
-  const [selectedIncome, setSelectedIncome] = useState({});
+  const [selectedIncome, setSelectedIncome] = useState(null);
   const UpdateMutation = useUpdateIncome();
   const deleteMutation = useDeleteIncome();
 
@@ -33,28 +33,31 @@ const Incomes = () => {
       toastError("Start date cannot be after end date");
       return;
     }
-    refetch()
+    refetch();
   };
   const incomes = data?.incomes || [];
 
   const closeTransactionModal = () => {
-    document.getElementById("income-form-modal")?.close();
+    document.getElementById("transaction-form-modal")?.close();
     setSelectedIncome(null);
   };
 
   const handleIncomeSubmit = (formData) => {
-
     const isEdit = !!selectedIncome?._id;
 
-    UpdateMutation.mutate({
-      isEdit,
-      id: selectedIncome?._id,
-      formData,
-    });
-    if (!UpdateMutation.isPending) {
-      refetch();
-      closeTransactionModal();
-    }
+    UpdateMutation.mutate(
+      {
+        isEdit,
+        id: selectedIncome?._id,
+        formData,
+      },
+      {
+        onSuccess: () => {
+          refetch();
+          closeTransactionModal();
+        },
+      }
+    );
   };
 
   const handleDelete = () => {
@@ -64,7 +67,7 @@ const Incomes = () => {
   };
 
   const openTransactionFormModal = () => {
-    document.getElementById("income-form-modal")?.showModal();
+    document.getElementById("transaction-form-modal")?.showModal();
   };
 
   return (
@@ -105,9 +108,9 @@ const Incomes = () => {
             <p className="text-lg mt-1">
               <span>Earning from {data?.source}.</span>
               <br />
-              {`From ${formatDate(data?.searchStartDate || incomes[incomes.length - 1].date)} To ${formatDate(
-                data?.searchEndDate
-              )}`}
+              {`From ${formatDate(
+                data?.searchStartDate || incomes[incomes.length - 1].date
+              )} To ${formatDate(data?.searchEndDate)}`}
             </p>
           </div>
         </div>
