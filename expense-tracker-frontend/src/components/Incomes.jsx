@@ -103,7 +103,7 @@ const Incomes = () => {
           <div className="mt-auto">
             <h3 className="text-3xl text-primary">Total Income</h3>
             <p className="text-3xl font-bold text-success">
-              +$ {Number(data?.totalAmount).toLocaleString()}
+              +৳ {Number(data?.totalAmount).toLocaleString()}
             </p>
             <p className="text-lg mt-1">
               <span>Earning from {data?.source}.</span>
@@ -171,7 +171,7 @@ const Incomes = () => {
               </div>
               <div className="mt-auto">
                 <p className="text-3xl font-bold text-success">
-                  +${Number(income.amount).toLocaleString()}
+                  +৳{Number(income.amount).toLocaleString()}
                 </p>
                 <p className="text-xs text-base-content/50 mt-1">
                   {new Date(income.date).toLocaleDateString("en-US", {
