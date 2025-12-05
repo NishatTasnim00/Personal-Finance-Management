@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+// pages/Profile.jsx or components/Profile.jsx
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { toastSuccess, toastError } from "@/lib/toast";
 import api from '@/lib/api';
 import useAuthStore from '@/store/useAuthStore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase'; // Add storage to firebase.js
+import { storage } from '@/lib/firebase';
 
 const currencyOptions = [
+  { value: 'BDT', label: '৳ BDT' },
   { value: 'USD', label: '$ USD' },
   { value: 'EUR', label: '€ EUR' },
   { value: 'INR', label: '₹ INR' },
@@ -13,39 +17,55 @@ const currencyOptions = [
 
 const Profile = () => {
   const { user } = useAuthStore();
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [profileData, setProfileData] = useState(null);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { isDirty, isSubmitting },
+  } = useForm({ mode: 'onChange' });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const { result } = await api.get('/user/profile');
+        setProfileData(result);
+        reset({
+          name: result.name || '',
+          age: result.age || '',
+          profession: result.profession || '',
+          currency: result.currency || 'USD',
+          bio: result.bio || '',
+          theme: result.theme || 'system',
+          notifications: result.notifications ?? true,
+        });
+      } catch (err) {
+        toastError('Failed to load profile', err);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchProfile();
-  }, []);
+  }, [reset]);
 
-  const fetchProfile = async () => {
+  const onSubmit = async (data) => {
     try {
-      const data = await api.get('/user/profile');
-      setProfile(data);
+      await api.patch('/user/profile', {
+        name: data.name.trim(),
+        age: data.age ? Number(data.age) : undefined,
+        profession: data.profession?.trim(),
+        currency: data.currency,
+        bio: data.bio?.trim(),
+        theme: data.theme,
+        notifications: data.notifications,
+      });
+      toastSuccess('Profile updated successfully!');
     } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProfile((p) => ({
-      ...p,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleSave = async () => {
-    try {
-      await api.patch('/user/profile', profile);
-      alert('Profile updated!');
-    } catch (err) {
-      alert(err.message);
+      toastError(err?.response?.data?.message || 'Failed to update profile');
     }
   };
 
@@ -54,103 +74,143 @@ const Profile = () => {
     if (!file) return;
 
     setUploading(true);
-    const storageRef = ref(storage, `avatars/${user.uid}`);
-    await uploadBytes(storageRef, file);
-    const url = await getDownloadURL(storageRef);
+    try {
+      const storageRef = ref(storage, `avatars/${user.uid}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
 
-    setProfile((p) => ({ ...p, avatar: url }));
-    await api.patch('/user/profile', { avatar: url });
-    setUploading(false);
+      await api.patch('/user/profile', { avatar: url });
+      setProfileData((p) => ({ ...p, avatar: url }));
+      toastError('Avatar updated!');
+    } catch (err) {
+      toastError('Failed to upload avatar');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  if (loading) return <div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg"></span></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  const avatarUrl = profileData?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.name || 'User')}&background=6366f1&color=fff&bold=true`;
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Profile Settings</h1>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8 text-center">Profile Settings</h1>
 
-      <div className="card bg-base-100 shadow-xl">
-        <div className="card-body space-y-6">
+      <div className="card bg-base-100 shadow-2xl">
+        <div className="card-body space-y-8">
+
           {/* Avatar */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center sm:flex-row gap-6">
             <div className="avatar">
-              <div className="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img src={profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=6366f1&color=fff`} alt="Avatar" />
+              <div className="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-4">
+                <img src={avatarUrl} alt="Profile" className="object-cover" />
               </div>
             </div>
-            <div>
-              <label className="btn btn-primary btn-sm btn-disabled cursor-pointer">
-                {uploading ? <span className="loading loading-spinner"></span> : 'Change Photo'}
-                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+            <div className="text-center sm:text-left">
+              <label className={`btn btn-primary ${uploading ? 'loading' : ''}`}>
+                {uploading ? 'Uploading...' : 'Change Photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  disabled={uploading}
+                />
+              </label>
+              <p className="text-sm text-base-content/60 mt-2">JPG, PNG up to 5MB</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Name</span></label>
+                <input {...register('name')} className="input input-bordered" placeholder="John Doe" />
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Email</span></label>
+                <input value={profileData?.email || ''} disabled className="input input-bordered input-disabled" />
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Age</span></label>
+                <input {...register('age')} type="number" min="13" max="120" className="input input-bordered" placeholder="25" />
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Profession</span></label>
+                <input {...register('profession')} className="input input-bordered" placeholder="Software Engineer" />
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Currency</span></label>
+                <select {...register('currency')} className="select select-bordered">
+                  {currencyOptions.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1"><span className="label-text font-medium">Theme</span></label>
+                <select {...register('theme')} className="select select-bordered">
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="system">System</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-control">
+              <label className="label w-full mb-1">
+                <span className="label-text font-medium">Bio</span>
+                <span className="label-text-alt">{watch('bio')?.length || 0}/160</span>
+              </label>
+              <textarea
+                {...register('bio')}
+                className="textarea textarea-bordered h-28 resize-none"
+                placeholder="Tell us about yourself..."
+                maxLength={160}
+              />
+            </div>
+
+            <div className="form-control">
+              <label className="cursor-pointer label justify-start gap-4">
+                <input {...register('notifications')} type="checkbox" className="toggle toggle-primary" />
+                <span className="label-text">Email Notifications</span>
               </label>
             </div>
-          </div>
 
-          {/* Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label"><span className="label-text">Name</span></label>
-              <input type="text" name="name" value={profile.name || ''} onChange={handleChange} className="input input-bordered" />
+            <div className="card-actions justify-end pt-6">
+              <button
+                type="submit"
+                disabled={!isDirty || isSubmitting}
+                className="btn btn-primary btn-wide"
+              >
+                {isSubmitting ? (
+                  <span className="loading loading-spinner"></span>
+                ) : isDirty ? (
+                  'Save Changes'
+                ) : (
+                  'No Changes'
+                )}
+              </button>
             </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">Email</span></label>
-              <input type="email" value={profile.email} disabled className="input input-bordered input-disabled" />
-            </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">Age</span></label>
-              <input type="number" name="age" value={profile.age || ''} onChange={handleChange} className="input input-bordered" min="13" max="120" />
-            </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">Profession</span></label>
-              <input type="text" name="profession" value={profile.profession || ''} onChange={handleChange} className="input input-bordered" />
-            </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">Currency</span></label>
-              <select name="currency" value={profile.currency} onChange={handleChange} className="select select-bordered">
-                {currencyOptions.map(c => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-control">
-              <label className="label"><span className="label-text">Theme</span></label>
-              <select name="theme" value={profile.theme} onChange={handleChange} className="select select-bordered">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-                <option value="system">System</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-control">
-            <label className="label w-full">
-              <span className="label-text">Bio</span>
-              <span className="label-text-alt">{(profile.bio || '').length}/160</span>
-              </label>
-            <textarea name="bio" value={profile.bio || ''} onChange={handleChange} className="w-full textarea textarea-bordered h-24" maxLength={160} />
-          </div>
-
-          <div className="form-control">
-            <label className="cursor-pointer label">
-              <span className="label-text">Email Notifications</span>
-              <input type="checkbox" name="notifications" checked={profile.notifications} onChange={handleChange} className="toggle toggle-primary" />
-            </label>
-          </div>
-
-          <div className="card-actions justify-end">
-            <button onClick={handleSave} className="btn btn-primary">
-              Save Changes
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Profile;
