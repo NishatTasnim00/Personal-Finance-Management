@@ -7,6 +7,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import incomeRoutes from './routes/incomes.js'
+import expenseRoutes from './routes/expenses.js'
 
 dotenv.config();
 connectDB();
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/incomes', incomeRoutes);
+app.use('/api/expenses', expenseRoutes);
 
 
 const PORT = process.env.PORT || 5000;
