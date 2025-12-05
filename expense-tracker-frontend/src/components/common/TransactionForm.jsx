@@ -2,10 +2,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Plus, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import SpendCalender from "@/components/common/SpendCalender";
 import Select from "react-select";
-import { useState } from "react";
 
 const getSchema = (type) => {
   const base = {
@@ -17,12 +16,19 @@ const getSchema = (type) => {
       invalid_type_error: "Please select a valid date",
     }),
     description: z.string().max(100, "Max 100 characters").optional(),
+    recurring: z.boolean().optional(),
   };
 
   if (type === "income") {
     return z.object({
       ...base,
       source: z.string().min(1, "Source is required"),
+    });
+  }
+  if (type === "expense") {
+    return z.object({
+      ...base,
+      category: z.string().min(1, "Category is required"),
     });
   }
 
@@ -38,16 +44,11 @@ const getSchema = (type) => {
 
   return z.object({
     ...base,
-    source: z
-      .string()
-      .min(
-        1,
-        type === "income" ? "Source is required" : "Category is required"
-      ),
+    type: z.string().min(1, "Category is required"),
   });
 };
 
-const IncomeForm = ({
+const TransactionForm = ({
   sources = [],
   type = "income",
   // categories = [],
@@ -60,6 +61,7 @@ const IncomeForm = ({
   const isEditMode = !!selectedTransaction;
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const fieldName = type === "income" ? "source" : "category";
 
   const {
     register,
@@ -71,37 +73,13 @@ const IncomeForm = ({
   } = useForm({
     resolver: zodResolver(getSchema(type)),
     defaultValues: {
-      source: selectedTransaction?.source || "",
+      [fieldName]: selectedTransaction?.[fieldName] || "",
       amount: selectedTransaction?.amount || "",
       description: selectedTransaction?.description || "",
       date: new Date(selectedTransaction?.date),
+      recurring: selectedTransaction?.recurring ?? false,
     },
   });
-  // Reset form when selectedTransaction changes (edit mode)
-  useEffect(() => {
-    if (selectedTransaction) {
-      const transactionDate = selectedTransaction.date
-        ? new Date(selectedTransaction.date)
-        : new Date();
-      reset({
-        source: selectedTransaction.source || "",
-        amount: selectedTransaction.amount || 0,
-        description: selectedTransaction.description || "",
-        date: transactionDate,
-      });
-      setSelectedDate(transactionDate); // also keep calendar in sync
-      setSelectedOption(null);
-    } else {
-      const today = new Date();
-      reset({
-        source: "",
-        amount: 0,
-        description: "",
-        date: today,
-      });
-      setSelectedDate(today);
-    }
-  }, [selectedTransaction, reset, onClose]);
 
   const options = sources.map((source) => ({
     value: source.value,
@@ -113,9 +91,48 @@ const IncomeForm = ({
     ),
   }));
 
+  // Reset form when selectedTransaction changes (edit mode)
+  useEffect(() => {
+    if (selectedTransaction) {
+      const transactionDate = selectedTransaction.date
+        ? new Date(selectedTransaction.date)
+        : new Date();
+        const matchedSource = sources.find(s => s.value === selectedTransaction[fieldName]);
+      reset({
+        [fieldName]: selectedTransaction?.[fieldName] || "",
+        amount: selectedTransaction.amount || 0,
+        description: selectedTransaction.description || "",
+        date: transactionDate,
+        recurring: selectedTransaction?.recurring ?? false,
+        
+      });
+      setSelectedDate(transactionDate); // also keep calendar in sync
+      setSelectedOption(matchedSource ? {
+    value: matchedSource.value,
+    label: (
+      <div className="flex items-center gap-3">
+        <matchedSource.icon style={{ color: matchedSource.color }} size={20} />
+        <span>{matchedSource.name}</span>
+      </div>
+    )
+  } : null);
+    } else {
+      const today = new Date();
+      reset({
+        [fieldName]: "",
+        amount: 0,
+        description: "",
+        date: today,
+        recurring: false,
+      });
+      setSelectedDate(today);
+      setSelectedOption(null);
+    }
+  }, [selectedTransaction, reset, fieldName, sources]);
+
   return (
     <>
-      <dialog id="income-form-modal" className="modal">
+      <dialog id="transaction-form-modal" className="modal">
         <div className="modal-box w-11/12 max-w-lg overflow-visible">
           <button
             onClick={onClose}
@@ -123,25 +140,26 @@ const IncomeForm = ({
           >
             <X className="w-5 h-5" />
           </button>
-          <h3 className="font-bold text-xl mb-6">
-            {isEditMode ? "Edit Income" : "Add New Income"}
+
+          <h3 className="font-bold text-xl mb-6 capitalize">
+            {isEditMode ? `Edit ${type}` : `Add New ${type}`}
           </h3>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
               <label className="label">
-                <span className="label-text font-medium">Source *</span>
+                <span className="label-text font-medium capitalize">{fieldName} *</span>
               </label>
               <Select
                 options={options}
-                defaultValue={selectedOption}
-                onChange={(option) => setValue("source", option.value)}
-                placeholder="Select Source"
+                value={selectedOption}
+                onChange={(option) =>{ option && setValue(fieldName, option.value), setSelectedOption(option)}}
+                placeholder={`Select ${fieldName}`}
                 classNamePrefix="react-select"
-                className="input  w-full p-0"
+                className="input w-full p-0"
               />
-              {errors.source && (
+              {errors[fieldName]?.message && (
                 <p className="text-error text-sm mt-1">
-                  {errors.source.message}
+                  {errors[fieldName].message}
                 </p>
               )}
             </div>
@@ -205,6 +223,7 @@ const IncomeForm = ({
               <label className="label">
                 <span className="label-text font-medium">Date *</span>
               </label>
+              <input type="hidden" {...register("date")} value={selectedDate} />
               <SpendCalender
                 selected={selectedDate}
                 onChange={(date) => {
@@ -220,14 +239,14 @@ const IncomeForm = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn btn-primary w-full"
+              className="btn btn-primary w-full capitalize"
             >
               {isSubmitting ? (
                 <span className="loading loading-spinner text-base-content loading-sm"></span>
               ) : (
                 <>
                   <Plus className="w-5 h-5" />
-                  {isEditMode ? "Update Income" : "Add Income"}
+                  {isEditMode ? `Update ${type}` : `Add ${type}`}
                 </>
               )}
             </button>
@@ -324,4 +343,4 @@ const IncomeForm = ({
   );
 };
 
-export default IncomeForm;
+export default TransactionForm;
