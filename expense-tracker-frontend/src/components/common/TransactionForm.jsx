@@ -86,7 +86,7 @@ const TransactionForm = ({
       description: selectedTransaction?.description || "",
       date: new Date(selectedTransaction?.date),
       recurring: selectedTransaction?.recurring ?? false,
-      recurringFrequency: selectedTransaction.recurringFrequency || "",
+      recurringFrequency: selectedTransaction?.recurringFrequency || "",
     },
   });
 
@@ -115,7 +115,7 @@ const TransactionForm = ({
         description: selectedTransaction.description || "",
         date: transactionDate,
         recurring: selectedTransaction?.recurring ?? false,
-        recurringFrequency: selectedTransaction.recurringFrequency || "",
+        recurringFrequency: selectedTransaction?.recurringFrequency || "",
       });
       setSelectedDate(transactionDate); // also keep calendar in sync
       setSelectedOption(
@@ -301,6 +301,29 @@ const TransactionForm = ({
                   </div>
                 )}
               </>
+            )}
+
+            {/* Period Select - Only for Budget */}
+            {type === "budget" && (
+              <div>
+                <label className="label">
+                  <span className="label-text font-medium">Period *</span>
+                </label>
+                <select
+                  {...register("period")}
+                  className="select select-bordered w-full"
+                >
+                  <option value="">Select Period</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                </select>
+                {errors.period && (
+                  <p className="text-error text-sm mt-1">
+                    {errors.period.message}
+                  </p>
+                )}
+              </div>
             )}
             <div>
               <label className="label">
