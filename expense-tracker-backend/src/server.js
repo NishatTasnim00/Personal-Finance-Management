@@ -9,6 +9,7 @@ import userRoutes from './routes/user.js';
 import incomeRoutes from './routes/incomes.js'
 import expenseRoutes from './routes/expenses.js'
 import budgetRoutes from './routes/budget.js'
+import statsRoutes from './routes/stats.js'
 
 dotenv.config();
 connectDB();
@@ -27,6 +28,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/incomes', incomeRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/stats', statsRoutes);
 
 
 const PORT = process.env.PORT || 5000;

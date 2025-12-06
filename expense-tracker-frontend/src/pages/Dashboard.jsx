@@ -11,8 +11,6 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  LineChart,
-  Line,
 } from "recharts";
 import api from "@/lib/api";
 import { format } from "date-fns";
@@ -33,20 +31,21 @@ const COLORS = [
   "#ec4899",
   "#06b6d4",
   "#10b981",
-
 ];
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
-    totalIncome: 0,
-    totalExpense: 0,
-    balance: 0,
+    netWorth: 0,
+    monthlyIncome: 0,
+    monthlyExpense: 0,
+    monthlyBalance: 0,
     savingsRate: 0,
     topCategory: "None",
     topAmount: 0,
   });
   const [monthlyData, setMonthlyData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
+  const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -55,14 +54,20 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch last 6 months income + expense
-      const [incomeRes, expenseRes] = await Promise.all([
-        api.get("/incomes?period=6months"),
-        api.get("/expenses?period=6months"),
-      ]);
+      // Fetch last 6 months income + expense + budgets + net worth
+      const [incomeRes, expenseRes, budgetRes, netWorthRes] = await Promise.all(
+        [
+          api.get("/incomes?period=months"),
+          api.get("/expenses?period=months"),
+          api.get("/budgets?period=monthly"),
+          api.get("/stats/net-worth"),
+        ]
+      );
 
       const incomes = incomeRes.result?.incomes || [];
       const expenses = expenseRes.result?.expenses || [];
+      const budgetsData = budgetRes.result || [];
+      const { netWorth } = netWorthRes.result || { netWorth: 0 };
 
       // Current month stats
       const now = new Date();
@@ -88,6 +93,7 @@ const Dashboard = () => {
         0
       );
       const balance = totalIncome - totalExpense;
+      const monthlyChange = balance;
       const savingsRate =
         totalIncome > 0
           ? ((totalIncome - totalExpense) / totalIncome) * 100
@@ -98,12 +104,9 @@ const Dashboard = () => {
       currentMonthExpenses.forEach((e) => {
         categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
       });
-      // console.log(currentMonthExpenses);
-      console.log(categoryMap);
       const topCat = Object.entries(categoryMap).sort(
         (a, b) => b[1] - a[1]
       )[0] || ["None", 0];
-      console.log(topCat);
 
       // Monthly trend (last 6 months)
       const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -137,8 +140,10 @@ const Dashboard = () => {
       }));
 
       setStats({
+        netWorth,
         totalIncome,
         totalExpense,
+        monthlyChange,
         balance,
         savingsRate: Math.round(savingsRate),
         topCategory: topCat[0],
@@ -149,6 +154,7 @@ const Dashboard = () => {
       setCategoryData(
         catData.length > 0 ? catData : [{ name: "No expenses", value: 1 }]
       );
+      setBudgets(budgetsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -165,12 +171,26 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-8 max-w-7xl mx-auto">
+    <div className="p-6 space-y-8 mx-auto">
       <div className="flex items-center justify-between">
-        {/* <h1 className="text-4xl font-bold">Dashboard</h1> */}
+        <h1 className="text-4xl font-bold text-primary">Dashboard</h1>
         <p className="text-lg text-primary">
           {format(new Date(), "MMMM yyyy")}
         </p>
+      </div>
+
+      {/* Net Worth Card */}
+      <div className="card bg-base-100 text-primary shadow-2xl">
+        <div className="card-body text-center">
+          <h2 className="text-lg">Your Net Worth</h2>
+          <p className="text-5xl font-bold mt-2">
+            ৳{stats.netWorth.toLocaleString()}
+          </p>
+          <p className="text-sm mt-4 opacity-80">
+            +৳{Math.abs(stats.monthlyChange).toLocaleString()} this month
+            {stats.monthlyChange > 0 ? "↑" : "↓"}
+          </p>
+        </div>
       </div>
 
       {/* Big Stat Cards */}
@@ -238,6 +258,33 @@ const Dashboard = () => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="card bg-base-100 shadow-xl">
+        <div className="card-body">
+          <h2 className="card-title">Budget Overview</h2>
+          {budgets.map((b) => (
+            <div key={b._id} className="mb-4">
+              <p className="font-medium capitalize">
+                {b.category}: ৳{b.remaining.toLocaleString()} left
+              </p>
+              <progress
+                className="progress progress-primary"
+                value={b.progress}
+                max="100"
+              />
+              {b.progress > 100 ? (
+                <p className="text-error text-sm mt-1 text-center">
+                  Limit exceeded by ৳{(b.spent - b.amount).toLocaleString()}!
+                </p>
+              ) : b.progress > 80 ? (
+                <p className="text-warning text-sm mt-1 text-center">
+                  Approaching limit!
+                </p>
+              ) : null}
+            </div>
+          ))}
         </div>
       </div>
 
