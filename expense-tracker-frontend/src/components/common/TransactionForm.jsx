@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import SpendCalender from "@/components/common/SpendCalender";
 import Select from "react-select";
+import { recurringOption } from "@/lib/helper";
 
 const getSchema = (type) => {
   const base = {
@@ -26,10 +27,16 @@ const getSchema = (type) => {
     });
   }
   if (type === "expense") {
-    return z.object({
-      ...base,
-      category: z.string().min(1, "Category is required"),
-    });
+    return z
+      .object({
+        ...base,
+        category: z.string().min(1, "Category is required"),
+        recurringFrequency: z.string().optional(),
+      })
+      .refine((data) => !data.recurring || data.recurringFrequency, {
+        message: "Please select how often this repeats",
+        path: ["recurringFrequency"],
+      });
   }
 
   if (type === "budget") {
@@ -62,6 +69,7 @@ const TransactionForm = ({
   const [selectedOption, setSelectedOption] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const fieldName = type === "income" ? "source" : "category";
+  const isRecurringAllowed = type === "expense";
 
   const {
     register,
@@ -78,6 +86,7 @@ const TransactionForm = ({
       description: selectedTransaction?.description || "",
       date: new Date(selectedTransaction?.date),
       recurring: selectedTransaction?.recurring ?? false,
+      recurringFrequency: selectedTransaction.recurringFrequency || "",
     },
   });
 
@@ -97,25 +106,34 @@ const TransactionForm = ({
       const transactionDate = selectedTransaction.date
         ? new Date(selectedTransaction.date)
         : new Date();
-        const matchedSource = sources.find(s => s.value === selectedTransaction[fieldName]);
+      const matchedSource = sources.find(
+        (s) => s.value === selectedTransaction[fieldName]
+      );
       reset({
         [fieldName]: selectedTransaction?.[fieldName] || "",
         amount: selectedTransaction.amount || 0,
         description: selectedTransaction.description || "",
         date: transactionDate,
         recurring: selectedTransaction?.recurring ?? false,
-        
+        recurringFrequency: selectedTransaction.recurringFrequency || "",
       });
       setSelectedDate(transactionDate); // also keep calendar in sync
-      setSelectedOption(matchedSource ? {
-    value: matchedSource.value,
-    label: (
-      <div className="flex items-center gap-3">
-        <matchedSource.icon style={{ color: matchedSource.color }} size={20} />
-        <span>{matchedSource.name}</span>
-      </div>
-    )
-  } : null);
+      setSelectedOption(
+        matchedSource
+          ? {
+              value: matchedSource.value,
+              label: (
+                <div className="flex items-center gap-3">
+                  <matchedSource.icon
+                    style={{ color: matchedSource.color }}
+                    size={20}
+                  />
+                  <span>{matchedSource.name}</span>
+                </div>
+              ),
+            }
+          : null
+      );
     } else {
       const today = new Date();
       reset({
@@ -124,6 +142,7 @@ const TransactionForm = ({
         description: "",
         date: today,
         recurring: false,
+        recurringFrequency: "",
       });
       setSelectedDate(today);
       setSelectedOption(null);
@@ -147,12 +166,17 @@ const TransactionForm = ({
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
               <label className="label">
-                <span className="label-text font-medium capitalize">{fieldName} *</span>
+                <span className="label-text font-medium capitalize">
+                  {fieldName} *
+                </span>
               </label>
               <Select
                 options={options}
                 value={selectedOption}
-                onChange={(option) =>{ option && setValue(fieldName, option.value), setSelectedOption(option)}}
+                onChange={(option) => {
+                  option && setValue(fieldName, option.value),
+                    setSelectedOption(option);
+                }}
                 placeholder={`Select ${fieldName}`}
                 classNamePrefix="react-select"
                 className="input w-full p-0"
@@ -219,6 +243,65 @@ const TransactionForm = ({
                 </p>
               )}
             </div>
+
+            {/* Recurring Toggle - Only for Expense */}
+            {isRecurringAllowed && (
+              <>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    {...register("recurring")}
+                    className="checkbox checkbox-primary"
+                  />
+                  <label className="label-text cursor-pointer">
+                    Mark as recurring
+                  </label>
+                </div>
+                {watch("recurring") && (
+                  <div className="animate-in fade-in slide-in-from-top-2 duration-300 mt-4">
+                    <label className="label">
+                      <span className="label-text font-light mb-2">
+                        Repeat every
+                      </span>
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      {recurringOption.map((freq) => {
+                        const isSelected =
+                          watch("recurringFrequency") === freq.value;
+                        return (
+                          <label
+                            key={freq.value}
+                            className={`cursor-pointer transition-all duration-200 px-3 py-1 rounded-full border-2 text-sm
+              ${
+                isSelected
+                  ? "bg-primary text-primary-content border-primary shadow-lg scale-105"
+                  : "bg-base-200 border-base-300 hover:bg-base-300 hover:border-primary/50"
+              }`}
+                            onClick={() =>
+                              setValue("recurringFrequency", freq.value)
+                            }
+                          >
+                            <input
+                              type="radio"
+                              name="recurringFrequency"
+                              value={freq.value}
+                              {...register("recurringFrequency")}
+                              className="hidden"
+                            />
+                            {freq.label}
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {errors.recurringFrequency && (
+                      <p className="text-error text-sm mt-2">
+                        Please select a recurring frequency
+                      </p>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
             <div>
               <label className="label">
                 <span className="label-text font-medium">Date *</span>
