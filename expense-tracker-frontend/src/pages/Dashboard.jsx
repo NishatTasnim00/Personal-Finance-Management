@@ -261,7 +261,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="card bg-base-100 shadow-xl">
+      {/* <div className="card bg-base-100 shadow-xl">
         <div className="card-body">
           <h2 className="card-title">Budget Overview</h2>
           {budgets.map((b) => (
@@ -286,7 +286,7 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
