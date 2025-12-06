@@ -1,26 +1,10 @@
+// lib/helper.js — FINAL & PERFECT
 import { format } from "date-fns";
 import {
-  Briefcase,
-  Laptop2,
-  Store,
-  TrendingUp,
-  Gift,
-  Wallet,
-  PiggyBank,
-  HandCoins,
-  Utensils,
-  Car,
-  ShoppingBag,
-  Gamepad2,
-  Receipt,
-  HeartPulse,
-  GraduationCap,
-  Home,
-  Coffee,
-  Plane,
-  Smartphone,
-  Dumbbell,
-  MoreHorizontal,
+  Briefcase, Laptop2, Store, TrendingUp, Gift, Wallet, PiggyBank, HandCoins,
+  Utensils, Car, ShoppingBag, Gamepad2, Receipt, HeartPulse, GraduationCap,
+  Home, Coffee, Plane, Smartphone, Dumbbell, MoreHorizontal,
+  Shield, Heart, Sunset  // Add these!
 } from "lucide-react";
 
 export const defaultIncomeSources = [
@@ -57,6 +41,19 @@ export const recurringOption = [
   { value: "quarterly", label: "Quarterly" },
   { value: "halfyearly", label: "Half Yearly" },
   { value: "yearly", label: "Yearly" },
+];
+
+export const defaultGoalSuggestions = [
+  { title: "Emergency Fund", targetAmount: 100000, icon: Shield, color: "#10b981", recurring: true, recurringAmount: 10000, recurringFrequency: "monthly" },
+  { title: "New Phone", targetAmount: 60000, icon: Smartphone, color: "#3b82f6", recurring: false },
+  { title: "Dream Vacation", targetAmount: 150000, icon: Plane, color: "#8b5cf6", recurring: true, recurringAmount: 15000, recurringFrequency: "monthly" },
+  { title: "Buy a Laptop", targetAmount: 120000, icon: Laptop2, color: "#6366f1", recurring: true, recurringAmount: 10000 },
+  { title: "Wedding Fund", targetAmount: 500000, icon: Heart, color: "#ec4899", recurring: true, recurringAmount: 25000 },
+  { title: "Down Payment for Home", targetAmount: 2000000, icon: Home, color: "#f59e0b", recurring: true, recurringAmount: 50000 },
+  { title: "Start a Business", targetAmount: 300000, icon: Briefcase, color: "#06b6d4", recurring: true, recurringAmount: 20000 },
+  { title: "Education Fund", targetAmount: 400000, icon: GraduationCap, color: "#8b5cf6", recurring: true, recurringAmount: 15000 },
+  { title: "New Car", targetAmount: 800000, icon: Car, color: "#ef4444", recurring: true, recurringAmount: 40000 },
+  { title: "Retirement Fund", targetAmount: 5000000, icon: Sunset, color: "#10b981", recurring: true, recurringAmount: 30000 },
 ];
 
 export const formatDate = (date) => {
