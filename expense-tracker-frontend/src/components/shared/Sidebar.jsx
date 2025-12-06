@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, BanknoteArrowUp, BanknoteArrowDown, PiggyBank  } from "lucide-react";
+import { Menu, X, BanknoteArrowUp, BanknoteArrowDown, Goal , Wallet } from "lucide-react";
 import useAuthStore from "@/store/useAuthStore";
 
 const navItems = [
-  { name: "Income",    path: "/incomes",    icon: <BanknoteArrowUp />},
-  { name: "Expence", path: "/expenses", icon: <BanknoteArrowDown /> },
-  { name: "Budget", path: "/dashboard/budgets", icon: <PiggyBank /> },
+  { name: "Income",    path: "/dashboard/incomes",    icon: <BanknoteArrowUp />},
+  { name: "Expence", path: "/dashboard/expenses", icon: <BanknoteArrowDown /> },
+  { name: "Budget", path: "/dashboard/budgets", icon: <Wallet /> },
+  { name: "Budget", path: "/dashboard/savings-goals", icon: <Goal /> },
 
 ];
 

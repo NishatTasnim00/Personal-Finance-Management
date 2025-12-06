@@ -5,6 +5,7 @@ import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
 import Incomes from "@/components/Incomes";
 import Expenses from "@/components/Expenses";
+import Goals from "@/components/Goals";
 import useAuthStore from "@/store/useAuthStore";
 import AppLayout from "@/components/layout/AppLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -47,9 +48,10 @@ const AppRoutes = () => {
         >
           <Route element={<DashboardLayout />}>
             <Route path="dashboard" element={<Dashboard />} />
-            <Route path="incomes"    element={<Incomes />} />
-            <Route path="expenses"   element={<Expenses />} />
+            <Route path="dashboard/incomes"    element={<Incomes />} />
+            <Route path="dashboard/expenses"   element={<Expenses />} />
             <Route path="dashboard/budgets"   element={<Budgets />} />
+            <Route path="dashboard/savings-goals"   element={<Goals />} />
             <Route path="profile"   element={<Profile />} />
           </Route>
 
