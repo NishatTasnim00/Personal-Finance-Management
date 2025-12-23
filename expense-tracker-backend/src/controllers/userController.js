@@ -29,7 +29,7 @@ export const updateProfile = async (req, res) => {
   updates.updatedAt = new Date();
 
   // Optional: Allow only specific fields
-  const allowedFields = ['name', 'phone', 'currency', 'avatar', 'bio', 'monthlyGoal'];
+  const allowedFields = ['name', 'age', 'profession', 'phone', 'currency', 'theme', 'avatar', 'bio', 'monthlyGoal'];
   const filteredUpdates = Object.keys(updates)
     .filter(key => allowedFields.includes(key))
     .reduce((obj, key) => {
