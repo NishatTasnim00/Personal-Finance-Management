@@ -5,9 +5,9 @@ import useAuthStore from "@/store/useAuthStore";
 
 const navItems = [
   { name: "Income",    path: "/dashboard/incomes",    icon: <BanknoteArrowUp />},
-  { name: "Expence", path: "/dashboard/expenses", icon: <BanknoteArrowDown /> },
-  { name: "Budget", path: "/dashboard/budgets", icon: <Wallet /> },
-  { name: "Budget", path: "/dashboard/savings-goals", icon: <Goal /> },
+  { name: "Expense", path: "/dashboard/expenses", icon: <BanknoteArrowDown /> },
+  { name: "Budgets", path: "/dashboard/budgets", icon: <Wallet /> },
+  { name: "Savings Goals", path: "/dashboard/savings-goals", icon: <Goal /> },
 
 ];
 

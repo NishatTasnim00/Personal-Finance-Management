@@ -9,6 +9,7 @@ import userRoutes from './routes/user.js';
 import incomeRoutes from './routes/incomes.js'
 import expenseRoutes from './routes/expenses.js'
 import budgetRoutes from './routes/budget.js'
+import savingsGoalRoutes from './routes/savingsGoal.js';
 import statsRoutes from './routes/stats.js'
 
 dotenv.config();
@@ -28,6 +29,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/incomes', incomeRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/budgets', budgetRoutes);
+app.use('/api/savings-goals', savingsGoalRoutes);
 app.use('/api/stats', statsRoutes);
 
 

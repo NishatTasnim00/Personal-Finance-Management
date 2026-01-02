@@ -46,6 +46,7 @@ const Dashboard = () => {
   const [monthlyData, setMonthlyData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
   const [budgets, setBudgets] = useState([]);
+  const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -54,19 +55,20 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch last 6 months income + expense + budgets + net worth
-      const [incomeRes, expenseRes, budgetRes, netWorthRes] = await Promise.all(
-        [
+      // Fetch last 6 months income + expense + budgets + net worth + goals
+      const [incomeRes, expenseRes, budgetRes, netWorthRes, goalsRes] =
+        await Promise.all([
           api.get("/incomes?period=months"),
           api.get("/expenses?period=months"),
           api.get("/budgets?period=monthly"),
           api.get("/stats/net-worth"),
-        ]
-      );
+          api.get("/savings-goals"),
+        ]);
 
       const incomes = incomeRes.result?.incomes || [];
       const expenses = expenseRes.result?.expenses || [];
       const budgetsData = budgetRes.result || [];
+      const goalsData = goalsRes.result || [];
       const { netWorth } = netWorthRes.result || { netWorth: 0 };
 
       // Current month stats
@@ -155,6 +157,7 @@ const Dashboard = () => {
         catData.length > 0 ? catData : [{ name: "No expenses", value: 1 }]
       );
       setBudgets(budgetsData);
+      setGoals(goalsData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -341,6 +344,30 @@ const Dashboard = () => {
                   </Pie>
                   <Tooltip formatter={(v) => `৳${v.toLocaleString()}`} />
                 </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Savings Goals Progress */}
+        <div className="card bg-base-100 shadow-xl lg:col-span-2">
+          <div className="card-body">
+            <h2 className="card-title">Savings Goals Progress</h2>
+            {goals.length === 0 ? (
+              <div className="text-center py-10 text-base-content/50">
+                No savings goals yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={goals}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="title" />
+                  <YAxis />
+                  <Tooltip formatter={(v) => `৳${v.toLocaleString()}`} />
+                  <Legend />
+                  <Bar dataKey="currentAmount" fill="#10b981" name="Saved" />
+                  <Bar dataKey="targetAmount" fill="#6366f1" name="Target" />
+                </BarChart>
               </ResponsiveContainer>
             )}
           </div>
