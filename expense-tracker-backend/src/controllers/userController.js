@@ -29,7 +29,7 @@ export const updateProfile = async (req, res) => {
   updates.updatedAt = new Date();
 
   // Optional: Allow only specific fields
-  const allowedFields = ['name', 'age', 'profession', 'phone', 'currency', 'theme', 'avatar', 'bio', 'monthlyGoal'];
+  const allowedFields = ['name', 'age', 'profession', 'phone', 'currency', 'theme', 'avatar', 'bio', 'notifications', 'monthlyGoal', 'monthlyIncome'];
   const filteredUpdates = Object.keys(updates)
     .filter(key => allowedFields.includes(key))
     .reduce((obj, key) => {
@@ -66,37 +66,26 @@ export const updateProfile = async (req, res) => {
 };
 
 export const uploadAvatar = async (req, res) => {
-  // Best practice: Let frontend upload to Firebase Storage directly
-  // Then save the download URL here
-  successResponse(
-    res,
-    { message: 'Upload avatar using Firebase Storage client-side, then call updateProfile with the URL' },
-    200
-  );
-};
-
-// Bonus: If you ever want a dedicated endpoint to save avatar URL
-export const updateAvatar = async (req, res) => {
-  const { avatarUrl } = req.body;
-
-  if (!avatarUrl || typeof avatarUrl !== 'string') {
-    return errorResponse(res, 'Valid avatar URL is required', 400);
+  if (!req.file || !req.file.path) {
+    return errorResponse(res, 'No file uploaded or upload failed', 400);
   }
+
+  const avatarUrl = req.file.path;
 
   try {
     const user = await User.findOneAndUpdate(
       { uid: req.user.uid },
       { $set: { avatar: avatarUrl, updatedAt: new Date() } },
-      { new: true, select: 'avatar name email' }
+      { new: true, runValidators: true, select: '-__v -password' }
     );
 
     if (!user) {
       return errorResponse(res, 'User not found', 404);
     }
 
-    successResponse(res, { avatar: user.avatar }, 200, 'Avatar updated');
+    successResponse(res, user, 200, 'Avatar updated successfully');
   } catch (err) {
-    console.error('updateAvatar error:', err);
+    console.error('uploadAvatar error:', err);
     errorResponse(res, 'Failed to update avatar', 500);
   }
 };

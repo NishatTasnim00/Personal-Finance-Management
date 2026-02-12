@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   currency: { type: String, default: "USD" },
   avatar: { type: String }, // Firebase Storage URL
   monthlyGoal: { type: Number, default: 0 },
+  monthlyIncome: { type: Number, default: 0 },
   bio: { type: String, maxlength: 160 },
   notifications: { type: Boolean, default: true },
   theme: { type: String, enum: ["light", "dark", "system"], default: "system" },

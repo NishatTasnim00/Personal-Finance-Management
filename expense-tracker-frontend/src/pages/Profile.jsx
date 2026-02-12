@@ -3,13 +3,9 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toastSuccess, toastError } from "@/lib/toast";
 import api from "@/lib/api";
-import useAuthStore from "@/store/useAuthStore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import { currencyOptions } from "@/lib/helper";
 
 const Profile = () => {
-  const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [profileData, setProfileData] = useState(null);
@@ -84,17 +80,19 @@ const Profile = () => {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `avatars/${user.uid}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const formData = new FormData();
+      formData.append("avatar", file);
 
-      await api.patch("/user/profile", { avatar: url });
-      setProfileData((p) => ({ ...p, avatar: url }));
-      toastError("Avatar updated!");
+      const res = await api.post("/user/profile/avatar", formData);
+
+      setProfileData((p) => ({ ...p, avatar: res.result.avatar }));
+      toastSuccess("Avatar updated!");
     } catch (err) {
-      toastError("Failed to upload avatar", err);
+      console.error("Avatar upload error:", err);
+      toastError(err?.response?.data?.message || "Failed to upload avatar");
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -109,7 +107,7 @@ const Profile = () => {
   const avatarUrl =
     profileData?.avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      profileData?.name || "User"
+      profileData?.name || "User",
     )}&background=6366f1&color=fff&bold=true`;
 
   return (

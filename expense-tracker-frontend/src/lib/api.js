@@ -31,7 +31,10 @@ api.interceptors.response.use(
       error.message ||
       'Network Error';
 
-    return Promise.reject(new Error(message));
+    // Preserve axios error shape (error.response, error.config, etc.)
+    // while normalizing the message for UI display.
+    error.message = message;
+    return Promise.reject(error);
   }
 );
 

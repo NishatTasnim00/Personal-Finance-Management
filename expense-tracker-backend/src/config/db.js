@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI, {
+  dbName: "personal_finance_management",
+});
     mongoose.set("toJSON", {
       transform: (doc, ret) => {
         delete ret.__v;
