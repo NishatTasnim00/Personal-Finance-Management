@@ -2,23 +2,15 @@ import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "@/store/useAuthStore";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useState, useEffect } from "react";
+import { useTheme } from "@/context/ThemeContext.jsx";
 
 const Navbar = () => {
   const { loading } = useAuthStore();
   const navigate = useNavigate();
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "pastel"
-  );
-
-  // Apply theme on change
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "pastel" ? "synthwave" : "pastel"));
+    setTheme(theme === "pastel" ? "synthwave" : "pastel");
   };
 
   const handleLogout = async () => {

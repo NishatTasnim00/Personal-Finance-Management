@@ -4,11 +4,13 @@ import { useForm } from "react-hook-form";
 import { toastSuccess, toastError } from "@/lib/toast";
 import api from "@/lib/api";
 import { currencyOptions } from "@/lib/helper";
+import { useTheme } from "@/context/ThemeContext.jsx";
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const { theme: currentTheme, setTheme: setGlobalTheme } = useTheme();
 
   const {
     register,
@@ -30,6 +32,7 @@ const Profile = () => {
           profession: result.profession || "",
           currency: result.currency || "USD",
           monthlyGoal: result.monthlyGoal || 0,
+          monthlyIncome: result.monthlyIncome || 0,
           bio: result.bio || "",
           theme: result.theme || "system",
           notifications: result.notifications ?? true,
@@ -44,7 +47,6 @@ const Profile = () => {
   }, [reset]);
 
   const onSubmit = async (data) => {
-    console.log(data);
     try {
       await api.patch("/user/profile", {
         name: data.name.trim(),
@@ -53,6 +55,9 @@ const Profile = () => {
         profession: data.profession?.trim(),
         currency: data.currency,
         monthlyGoal: data.monthlyGoal ? Number(data.monthlyGoal) : undefined,
+        monthlyIncome: data.monthlyIncome
+          ? Number(data.monthlyIncome)
+          : undefined,
         bio: data.bio?.trim(),
         theme: data.theme,
         notifications: data.notifications,
@@ -65,10 +70,31 @@ const Profile = () => {
         profession: data.profession?.trim(),
         currency: data.currency,
         monthlyGoal: data.monthlyGoal ? Number(data.monthlyGoal) : undefined,
+        monthlyIncome: data.monthlyIncome
+          ? Number(data.monthlyIncome)
+          : undefined,
         bio: data.bio?.trim(),
         theme: data.theme,
         notifications: data.notifications,
       });
+
+      // If theme changed, update global theme immediately
+      if (data.theme) {
+        const backendTheme = data.theme;
+        let daisyTheme = currentTheme;
+        if (backendTheme === "dark") daisyTheme = "synthwave";
+        else if (backendTheme === "light") daisyTheme = "pastel";
+        else {
+          if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
+            daisyTheme = "synthwave";
+          } else {
+            daisyTheme = "pastel";
+          }
+        }
+        if (daisyTheme !== currentTheme) {
+          setGlobalTheme(daisyTheme);
+        }
+      }
     } catch (err) {
       toastError(err?.response?.data?.message || "Failed to update profile");
     }
@@ -228,6 +254,19 @@ const Profile = () => {
                   min="0"
                   className="input input-bordered"
                   placeholder="1000"
+                />
+              </div>
+
+              <div className="form-control">
+                <label className="label w-full mb-1">
+                  <span className="label-text font-medium">Monthly Income</span>
+                </label>
+                <input
+                  {...register("monthlyIncome")}
+                  type="number"
+                  min="0"
+                  className="input input-bordered"
+                  placeholder="50000"
                 />
               </div>
 
