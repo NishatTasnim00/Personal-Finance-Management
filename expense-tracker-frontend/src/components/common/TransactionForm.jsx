@@ -107,7 +107,7 @@ const TransactionForm = ({
         ? new Date(selectedTransaction.date)
         : new Date();
       const matchedSource = sources.find(
-        (s) => s.value === selectedTransaction[fieldName]
+        (s) => s.value === selectedTransaction[fieldName],
       );
       reset({
         [fieldName]: selectedTransaction?.[fieldName] || "",
@@ -132,7 +132,7 @@ const TransactionForm = ({
                 </div>
               ),
             }
-          : null
+          : null,
       );
     } else {
       const today = new Date();
@@ -149,6 +149,28 @@ const TransactionForm = ({
     }
   }, [selectedTransaction, reset, fieldName, sources]);
 
+  // Reset form whenever the modal is closed (after submit success or user cancel)
+  useEffect(() => {
+    const dialog = document.getElementById("transaction-form-modal");
+    if (!dialog) return;
+    const onDialogClose = () => {
+      const today = new Date();
+      const baseReset = {
+        [fieldName]: "",
+        amount: 0,
+        description: "",
+        date: today,
+        recurring: false,
+        recurringFrequency: "",
+      };
+      reset(type === "budget" ? { ...baseReset, period: "" } : baseReset);
+      setSelectedDate(today);
+      setSelectedOption(null);
+    };
+    dialog.addEventListener("close", onDialogClose);
+    return () => dialog.removeEventListener("close", onDialogClose);
+  }, [reset, fieldName, type]);
+
   return (
     <>
       <dialog id="transaction-form-modal" className="modal">
@@ -163,6 +185,7 @@ const TransactionForm = ({
           <h3 className="font-bold text-xl mb-6 capitalize">
             {isEditMode ? `Edit ${type}` : `Add New ${type}`}
           </h3>
+          {/* handleSubmit validates with zod, then calls parent onSubmit(data); parent closes modal on success, and dialog "close" event resets the form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>
               <label className="label">
@@ -174,8 +197,8 @@ const TransactionForm = ({
                 options={options}
                 value={selectedOption}
                 onChange={(option) => {
-                  option && setValue(fieldName, option.value),
-                    setSelectedOption(option);
+                  (option && setValue(fieldName, option.value),
+                    setSelectedOption(option));
                 }}
                 placeholder={`Select ${fieldName}`}
                 classNamePrefix="react-select"
@@ -208,8 +231,8 @@ const TransactionForm = ({
                     (watch("description")?.length || 0) > 90
                       ? "text-error"
                       : (watch("description")?.length || 0) > 70
-                      ? "text-warning"
-                      : "text-base-content/50"
+                        ? "text-warning"
+                        : "text-base-content/50"
                   }`}
                 >
                   {watch("description")?.length || 0}
@@ -333,7 +356,7 @@ const TransactionForm = ({
               <SpendCalender
                 selected={selectedDate}
                 onChange={(date) => {
-                  setSelectedDate(date), setValue("date", date || new Date());
+                  (setSelectedDate(date), setValue("date", date || new Date()));
                 }}
                 error={!!errors.date}
                 maxDate={new Date()}
@@ -404,7 +427,8 @@ const TransactionForm = ({
           border: 1px solid var(--color-base-300) !important;
           border-radius: 0.5rem !important;
           margin-top: 4px !important;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+          box-shadow:
+            0 10px 25px -5px rgba(0, 0, 0, 0.1),
             0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
           z-index: 9999 !important;
         }
