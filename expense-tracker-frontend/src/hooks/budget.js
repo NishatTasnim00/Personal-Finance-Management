@@ -1,4 +1,3 @@
-// src/hooks/budget.js
 import api from "@/lib/api";
 import { toastSuccess, toastError } from "@/lib/toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -28,24 +27,31 @@ export const useUpdateBudget = () => {
       if (isEdit && id) {
         return api.patch(`/budgets/${id}`, payload);
       }
+
       return api.post("/budgets", payload);
     },
+
     onSuccess: () => {
       toastSuccess("Budget saved!");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
-    onError: (err) => toastError(err?.response?.data?.message || "Failed to save budget"),
+
+    onError: (err) =>
+      toastError(err?.response?.data?.message || "Failed to save budget"),
   });
 };
 
 export const useDeleteBudget = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (id) => api.delete(`/budgets/${id}`),
+
     onSuccess: () => {
       toastSuccess("Budget deleted!");
       queryClient.invalidateQueries({ queryKey: ["budgets"] });
     },
+
     onError: () => toastError("Failed to delete budget"),
   });
 };
