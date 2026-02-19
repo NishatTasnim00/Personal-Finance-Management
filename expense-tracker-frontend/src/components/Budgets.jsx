@@ -1,4 +1,3 @@
-// src/components/Budgets.jsx
 import { useState } from "react";
 import {
   useGetBudgets,
@@ -7,7 +6,7 @@ import {
 } from "@/hooks/budget";
 import TransactionForm from "@/components/common/TransactionForm";
 import { defaultExpenseTypes } from "@/lib/helper";
-import { CirclePlus, Wallet, Trash2 } from "lucide-react";
+import { CirclePlus, Trash2 } from "lucide-react";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
 
 const Budgets = () => {
@@ -17,7 +16,7 @@ const Budgets = () => {
   const updateMutation = useUpdateBudget();
   const deleteMutation = useDeleteBudget();
 
-  const { data: budgets, isLoading, refetch } = useGetBudgets({ period });
+  const { data: budgets = [], isLoading } = useGetBudgets({ period });
 
   const closeTransactionModal = () => {
     document.getElementById("transaction-form-modal")?.close();
@@ -25,26 +24,20 @@ const Budgets = () => {
   };
 
   const handleSubmit = (formData) => {
-    updateMutation.mutate(
-      {
-        isEdit: !!selectedBudget?._id,
-        id: selectedBudget?._id,
-        formData,
-      },
-      {
-        onSuccess: () => {
-          refetch();
-          closeTransactionModal();
-        },
-      }
-    );
+    updateMutation.mutate({
+      isEdit: !!selectedBudget?._id,
+      id: selectedBudget?._id,
+      formData,
+    });
+
+    closeTransactionModal();
   };
 
   const handleDelete = () => {
-    if (selectedBudget?._id) {
-      deleteMutation.mutate(selectedBudget._id);
-      document.getElementById("delete-confirmation-modal")?.close();
-    }
+    if (!selectedBudget?._id) return;
+
+    deleteMutation.mutate(selectedBudget._id);
+    document.getElementById("delete-confirmation-modal")?.close();
   };
 
   const openTransactionFormModal = () => {
@@ -53,8 +46,10 @@ const Budgets = () => {
 
   return (
     <div className="p-6">
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-primary">Budgets</h1>
+
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value)}
@@ -99,13 +94,13 @@ const Budgets = () => {
                   {budget.category}
                 </h3>
                 <button
-                  className="cursor-help hover:text-error shadow-2xl hover:scale-110 transition-all z-50"
+                  className="cursor-help hover:text-error hover:scale-110 transition-all"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedBudget(budget);
                     document
                       .getElementById("delete-confirmation-modal")
-                      .showModal();
+                      ?.showModal();
                   }}
                 >
                   <Trash2 />
@@ -116,8 +111,8 @@ const Budgets = () => {
               </p>
               <div className="mt-4">
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Spent: ৳{budget.spent.toLocaleString()}</span>
-                  <span>Remaining: ৳{budget.remaining.toLocaleString()}</span>
+                  <span>Spent: ৳{budget.spent?.toLocaleString()}</span>
+                  <span>Remaining: ৳{budget.remaining?.toLocaleString()}</span>
                 </div>
                 <progress
                   className="progress progress-primary w-full"
@@ -125,7 +120,7 @@ const Budgets = () => {
                   max="100"
                 />
                 <p className="text-center mt-2 font-medium">
-                  ৳{budget.amount.toLocaleString()} Budget
+                  ৳{budget.amount?.toLocaleString()} Budget
                 </p>
                 <div className="text-center mt-3">
                   {budget.spent > budget.amount ? (
