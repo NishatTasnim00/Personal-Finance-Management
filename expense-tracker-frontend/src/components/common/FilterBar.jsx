@@ -1,19 +1,6 @@
-import { Calendar, Filter as FilterIcon, X } from "lucide-react";
-import "react-datepicker/dist/react-datepicker.css";
+import { Filter as FilterIcon, X } from "lucide-react";
 import SpendCalender from "@/components/common/SpendCalender";
-import { subDays } from "date-fns";
 import { formatDate } from "@/lib/helper";
-
-const CustomDateInput = ({ value, onClick, placeholder }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className="input input-bordered input-sm w-40 text-left flex justify-between items-center pr-2"
-  >
-    <span className="truncate">{value || placeholder}</span>
-    <Calendar className="w-4 h-4 opacity-60" />
-  </button>
-);
 
 const FilterBar = ({
   filter,
@@ -24,16 +11,15 @@ const FilterBar = ({
   setTo,
   source,
   setSource,
-  sourceOptions = [], 
+  sourceOptions = [],
   sourcePlaceholder = "All Sources",
-  onApplyCustom, 
+  onApplyCustom,
   className = "",
 }) => {
-
   const handleClear = () => {
     setFilter("all");
-    setFrom("");
-    setTo("");
+    setFrom(null);
+    setTo(null);
     setSource("");
   };
 
@@ -65,18 +51,14 @@ const FilterBar = ({
                 {period === "all"
                   ? "All Time"
                   : period === "today"
-                  ? "Today"
-                  : `This ${period}`}
+                    ? "Today"
+                    : `This ${period}`}
               </button>
             ))}
 
             <button
               onClick={() => {
                 setFilter(isCustom ? "all" : "custom");
-                if (!isCustom && !from && !to) {
-                  setFrom(subDays(new Date(), 30));
-                  setTo(new Date());
-                }
               }}
               className={`btn btn-sm ${
                 isCustom ? "btn-primary" : "btn-outline"
@@ -115,23 +97,26 @@ const FilterBar = ({
                       setTo(date);
                     }
                   }}
-                  maxDate={to ? new Date(to) : new Date()} 
+                  maxDate={to ? new Date(to) : new Date()}
                   placeholder="Start Date"
                   position="bottom-start"
                 />
-
                 <span className="text-base-content/60 hidden md:inline">→</span>
                 <span className="text-base-content/60 md:hidden">to</span>
-
                 <SpendCalender
                   selected={to ? new Date(to) : null}
                   onChange={(date) => setTo(date)}
                   minDate={from ? new Date(from) : null}
-                  maxDate={new Date()} 
+                  maxDate={new Date()}
                   placeholder="End Date"
                   position="right-0"
                 />
-                <button className="btn h-8 btn-secondary" onClick={onApplyCustom}>Set</button> {/* TODO: Implement later */}
+                <button
+                  className="btn h-8 btn-secondary"
+                  onClick={onApplyCustom}
+                >
+                  Set
+                </button>
               </div>
             )}
           </div>
@@ -150,14 +135,14 @@ const FilterBar = ({
                       to ? formatDate(to) : "?"
                     }`
                   : filter === "today"
-                  ? "Today"
-                  : filter === "week"
-                  ? "This Week"
-                  : filter === "month"
-                  ? "This Month"
-                  : filter === "year"
-                  ? "This Year"
-                  : "All Time"}
+                    ? "Today"
+                    : filter === "week"
+                      ? "This Week"
+                      : filter === "month"
+                        ? "This Month"
+                        : filter === "year"
+                          ? "This Year"
+                          : "All Time"}
               </span>
             </span>
 

@@ -7,6 +7,7 @@ import {
 } from "@/hooks/expense";
 import { toastError } from "@/lib/toast";
 import { useState } from "react";
+import { subDays } from "date-fns";
 import FilterBar from "@/components/common/FilterBar";
 import { formatDate } from "@/lib/helper";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
@@ -16,6 +17,8 @@ const Expenses = () => {
   const [period, setPeriod] = useState("month");
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const [tempStartDate, setTempStartDate] = useState(null);
+  const [tempEndDate, setTempEndDate] = useState(null);
   const [category, setType] = useState("");
   const [recurring, setRecurring] = useState("");
   const [selectedExpense, setSelectedExpense] = useState({});
@@ -30,19 +33,20 @@ const Expenses = () => {
     category,
     recurring:
       recurring === "true" ? true : recurring === "false" ? false : undefined,
-    enabled: period !== "custom" || (startDate && endDate),
+    enabled: period !== "custom" ? true : Boolean(startDate && endDate),
   });
 
   const handleApplyCustom = () => {
-    if (!startDate || !endDate) {
+    if (!tempStartDate || !tempEndDate) {
       toastError("Please pick both start and end dates");
       return;
     }
-    if (startDate > endDate) {
+    if (tempStartDate > tempEndDate) {
       toastError("Start date cannot be after end date");
       return;
     }
-    refetch();
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
   };
 
   const expenses = data?.expenses || [];
@@ -89,12 +93,23 @@ const Expenses = () => {
           if (newPeriod !== "custom") {
             setStartDate(null);
             setEndDate(null);
+            setTempStartDate(null);
+            setTempEndDate(null);
+          } else {
+            const defaultStart = subDays(new Date(), 30);
+            const defaultEnd = new Date();
+            const useStart = startDate || defaultStart;
+            const useEnd = endDate || defaultEnd;
+            setStartDate(useStart);
+            setEndDate(useEnd);
+            setTempStartDate(useStart);
+            setTempEndDate(useEnd);
           }
         }}
-        from={startDate}
-        setFrom={setStartDate}
-        to={endDate}
-        setTo={setEndDate}
+        from={tempStartDate}
+        setFrom={setTempStartDate}
+        to={tempEndDate}
+        setTo={setTempEndDate}
         source={category}
         setSource={setType}
         sourceOptions={defaultExpenseTypes.map((t) => t.value)}
