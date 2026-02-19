@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "@/lib/api";
 import { toastError } from "@/lib/toast";
+import useAuthStore from "@/store/useAuthStore";
 
 const ThemeContext = createContext({
   theme: "light",
@@ -28,24 +29,25 @@ const mapDaisyToBackend = (daisyTheme) => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  const user = useAuthStore((s) => s.user);
   const [theme, setThemeState] = useState(() => {
-    // Fallback to whatever is in localStorage or default
     return localStorage.getItem("theme") || "pastel";
   });
   const [loading, setLoading] = useState(false);
 
-  // Apply theme to document + localStorage whenever it changes
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // On mount, sync theme from backend profile
+  // Sync theme from backend only when user is logged in
   useEffect(() => {
+    if (!user) return;
+
     let cancelled = false;
+    setLoading(true);
 
     const loadThemeFromProfile = async () => {
-      setLoading(true);
       try {
         const { result } = await api.get("/user/profile");
         if (cancelled) return;
@@ -56,7 +58,6 @@ export const ThemeProvider = ({ children }) => {
       } catch (err) {
         if (!cancelled) {
           console.error("Failed to load theme from profile:", err);
-          // Non-fatal; app can still use local theme
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -68,7 +69,7 @@ export const ThemeProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   const setTheme = async (nextTheme) => {
     setThemeState(nextTheme);
@@ -91,7 +92,7 @@ export const ThemeProvider = ({ children }) => {
       {children}
     </ThemeContext.Provider>
   );
-}
+};
 
 export default ThemeContext;
 
