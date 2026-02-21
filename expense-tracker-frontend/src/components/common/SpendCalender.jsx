@@ -12,6 +12,7 @@ const SpendCalender = forwardRef(
       error = false,
       disabled = false,
       maxDate,
+      minDate,
       placeholder = "Select date",
       // label = "Date",
       position = 'bottom-full',
@@ -53,6 +54,7 @@ const SpendCalender = forwardRef(
                 setOpen(false);
               }}
               maxDate={maxDate}
+              minDate={minDate}
               inline
               disabled={disabled}
               calendarClassName="shadow-xl border border-base-300 rounded-lg bg-base-100 spend-calender"
