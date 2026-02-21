@@ -1,0 +1,7 @@
+{
+  "monthly_income": 50000,
+  "transactions": [
+    {"date": "2023-10-01", "amount": 1000, "category": "Food", "description": "Lunch", "type": "Expense"},
+    {"date": "2023-10-02", "amount": 500, "category": "Transport", "description": "Uber", "type": "Expense"}
+  ]
+}

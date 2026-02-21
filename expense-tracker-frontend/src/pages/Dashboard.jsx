@@ -45,7 +45,6 @@ const Dashboard = () => {
   });
   const [monthlyData, setMonthlyData] = useState([]);
   const [categoryData, setCategoryData] = useState([]);
-  const [budgets, setBudgets] = useState([]);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -55,19 +54,16 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch last 6 months income + expense + budgets + net worth + goals
-      const [incomeRes, expenseRes, budgetRes, netWorthRes, goalsRes] =
-        await Promise.all([
-          api.get("/incomes?period=months"),
-          api.get("/expenses?period=months"),
-          api.get("/budgets?period=monthly"),
-          api.get("/stats/net-worth"),
-          api.get("/savings-goals"),
-        ]);
+      // Fetch last 6 months income + expense + net worth + goals
+      const [incomeRes, expenseRes, netWorthRes, goalsRes] = await Promise.all([
+        api.get("/incomes?period=months"),
+        api.get("/expenses?period=months"),
+        api.get("/stats/net-worth"),
+        api.get("/savings-goals"),
+      ]);
 
       const incomes = incomeRes.result?.incomes || [];
       const expenses = expenseRes.result?.expenses || [];
-      const budgetsData = budgetRes.result || [];
       const goalsData = goalsRes.result || [];
       const { netWorth } = netWorthRes.result || { netWorth: 0 };
 
@@ -156,7 +152,6 @@ const Dashboard = () => {
       setCategoryData(
         catData.length > 0 ? catData : [{ name: "No expenses", value: 1 }]
       );
-      setBudgets(budgetsData);
       setGoals(goalsData);
     } catch (err) {
       console.error(err);

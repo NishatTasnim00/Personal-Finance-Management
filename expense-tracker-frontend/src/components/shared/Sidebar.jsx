@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, BanknoteArrowUp, BanknoteArrowDown, Goal , Wallet } from "lucide-react";
+import {
+  Menu,
+  X,
+  BanknoteArrowUp,
+  BanknoteArrowDown,
+  Goal,
+  Wallet,
+  Brain,
+} from "lucide-react";
 import useAuthStore from "@/store/useAuthStore";
 
 const navItems = [
-  { name: "Income",    path: "/dashboard/incomes",    icon: <BanknoteArrowUp />},
+  { name: "Income", path: "/dashboard/incomes", icon: <BanknoteArrowUp /> },
   { name: "Expense", path: "/dashboard/expenses", icon: <BanknoteArrowDown /> },
   { name: "Budgets", path: "/dashboard/budgets", icon: <Wallet /> },
   { name: "Savings Goals", path: "/dashboard/savings-goals", icon: <Goal /> },
-
+  { name: "AI Planner", path: "/dashboard/ai-planner", icon: <Brain /> },
 ];
 
 export default function Sidebar() {
@@ -28,8 +36,10 @@ export default function Sidebar() {
       {/* ---------- Header (toggle only) ---------- */}
       <div className="flex items-center justify-between p-4 pl-2">
         {/* Logo – visible only when open */}
-        <div className={`flex items-center gap-2 ${isOpen ? "block" : "hidden"}`}>
-          <img src="/budget.png" alt="logo" className="h-8"/>
+        <div
+          className={`flex items-center gap-2 ${isOpen ? "block" : "hidden"}`}
+        >
+          <img src="/budget.png" alt="logo" className="h-8" />
           <div>
             <div className="font-bold text-lg">FinanceTracker</div>
             <div className="text-xs opacity-70">Personal Finance</div>
@@ -57,7 +67,11 @@ export default function Sidebar() {
                   to={item.path}
                   className={`
                     flex items-center gap-3 px-3 py-2 rounded-lg transition-all
-                    ${active ? "bg-primary text-primary-content" : "hover:bg-neutral"}
+                    ${
+                      active
+                        ? "bg-primary text-primary-content"
+                        : "hover:bg-neutral"
+                    }
                   `}
                 >
                   {/* Icon – always shown */}
@@ -91,7 +105,9 @@ export default function Sidebar() {
           </div>
           {/* User text – shown only when open */}
           <div className={`flex-1 ${isOpen ? "block" : "hidden"}`}>
-            <div className="font-medium truncate">{user?.displayName || "User"}</div>
+            <div className="font-medium truncate">
+              {user?.displayName || "User"}
+            </div>
             <div className="text-xs opacity-70 truncate">{user?.email}</div>
           </div>
         </div>

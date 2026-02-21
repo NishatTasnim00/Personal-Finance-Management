@@ -10,6 +10,7 @@ import useAuthStore from "@/store/useAuthStore";
 import AppLayout from "@/components/layout/AppLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Budgets from "@/components/Budgets";
+import AIPlanner from "@/pages/AIPlanner";
 
 const AppRoutes = () => {
   const { user, loading } = useAuthStore();
@@ -52,6 +53,7 @@ const AppRoutes = () => {
             <Route path="dashboard/expenses"   element={<Expenses />} />
             <Route path="dashboard/budgets"   element={<Budgets />} />
             <Route path="dashboard/savings-goals"   element={<Goals />} />
+            <Route path="dashboard/ai-planner"   element={<AIPlanner />} />
             <Route path="profile"   element={<Profile />} />
           </Route>
 
