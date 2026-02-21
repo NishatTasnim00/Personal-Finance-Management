@@ -1,19 +1,51 @@
-const DeleteConfirmation = ({ content, onConfirm }) => {
+const DeleteConfirmation = ({
+  id = "delete-confirmation-modal",
+  title,
+  content,
+  onConfirm,
+  isLoading = false,
+}) => {
+  const handleClose = () => {
+    document.getElementById(id)?.close();
+  };
+
   return (
-    <dialog id="delete-confirmation-modal" className="modal">
+    <dialog id={id} className="modal">
       <div className="modal-box">
-        <p className="py-4">Are you sure you want to delete this {content}?</p>
+        {title && <h3 className="font-bold text-lg mb-4">{title}</h3>}
+        <p className="py-4">
+          {content
+            ? `Are you sure you want to delete ${content}?`
+            : "Are you sure you want to delete this item?"}
+        </p>
         <div className="modal-action">
           <form method="dialog">
-            <button className="btn btn-secondary w-20">Close</button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
           </form>
-          <button onClick={onConfirm} className="btn btn-error w-20">
-            Delete
+          <button
+            onClick={onConfirm}
+            className="btn btn-error"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="loading loading-spinner loading-sm"></span>
+                Deleting...
+              </>
+            ) : (
+              "Delete"
+            )}
           </button>
         </div>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button>Close</button>
+      <form method="dialog" className="modal-backdrop" onClick={handleClose}>
+        <button type="button">close</button>
       </form>
     </dialog>
   );
