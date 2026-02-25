@@ -25,7 +25,12 @@ toast.appendChild(messageSpan);
 **Fix:** Use environment variables:
 ```javascript
 const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python3';
-const scriptPath = path.join(process.cwd(), 'Expense Tracker Model', 'budget_wrapper.py');
+const scriptPath = path.join(
+  process.cwd(),
+  '..',
+  'expense-tracker-model',
+  'budget_wrapper.py'
+);
 ```
 
 ### 3. **Missing Error Boundaries**

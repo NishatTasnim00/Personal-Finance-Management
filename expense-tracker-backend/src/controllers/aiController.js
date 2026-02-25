@@ -9,10 +9,15 @@ import User from "../models/User.js";
 // --- Helper to run Python Script ---
 const runBudgetAI = (inputData) => {
   return new Promise((resolve, reject) => {
-    const pythonExecutable =
-      "/Users/nishattasnim/Documents/Expenss Tracker/venv/bin/python";
+    const pythonExecutable = process.env.PYTHON_EXECUTABLE || "python3";
     const scriptPath =
-      "/Users/nishattasnim/Documents/Expenss Tracker/Expense Tracker Model/budget_wrapper.py";
+      process.env.AI_SCRIPT_PATH ||
+      path.join(
+        process.cwd(),
+        "..",
+        "expense-tracker-model",
+        "budget_wrapper.py"
+      );
 
     console.log("Spawning python process:", pythonExecutable, scriptPath);
     const pythonProcess = spawn(pythonExecutable, [scriptPath]);
