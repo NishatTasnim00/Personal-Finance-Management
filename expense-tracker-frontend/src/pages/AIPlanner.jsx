@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import api from "@/lib/api";
-import { Brain, Shield, ShoppingBag, AlertCircle, Calendar, Check, Save } from "lucide-react";
+import { Brain, Shield, ShoppingBag, AlertCircle, Calendar, Check, Save, X } from "lucide-react";
 import { toastSuccess, toastError} from '@/lib/toast'
 
 const AIPlanner = () => {
@@ -11,6 +11,7 @@ const AIPlanner = () => {
   const [error, setError] = useState(null);
   const [totalBudget, setTotalBudget] = useState("");
   const [accepting, setAccepting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchPlan = useCallback(async () => {
     setFetching(true);
@@ -75,6 +76,23 @@ const AIPlanner = () => {
     }
   };
 
+  const deletePlan = async () => {
+    if (!plan) return;
+    setDeleting(true);
+    try {
+      const res = await api.delete(`/ai/plan?month=${selectedMonth}`);
+      if (res.success) {
+        setPlan(null);
+        toastSuccess("Plan deleted.");
+      }
+    } catch (err) {
+      console.error(err);
+      toastError(err.response?.data?.message || "Failed to delete plan");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -101,8 +119,8 @@ const AIPlanner = () => {
       {!plan && !fetching && (
         <div className="card bg-base-100 shadow-xl animate-fade-in">
             <div className="card-body">
-                <h2 className="card-title mb-4">Generate Plan for {selectedMonth}</h2>
-                <div className="flex flex-col md:flex-row gap-4 items-end">
+                <h2 className="card-title mb-4">Plan for {selectedMonth}</h2>
+                <div className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
                     <div className="form-control w-full max-w-xs">
                         <label className="label">
                             <span className="label-text">Optional: Set a Max Budget Limit</span>
@@ -145,21 +163,31 @@ const AIPlanner = () => {
                     </div>
                     <span className="text-sm opacity-70">Generated for {plan.month}</span>
                 </div>
-                {!plan.isAccepted ? (
+                <div className="flex gap-2">
+                    {!plan.isAccepted ? (
+                        <button 
+                            className="btn btn-success btn-sm text-white gap-2"
+                            onClick={acceptPlan}
+                            disabled={accepting || deleting}
+                        >
+                            {accepting ? <span className="loading loading-spinner loading-xs"></span> : <Check className="w-4 h-4" />}
+                            Accept & Apply to Budget
+                        </button>
+                    ) : (
+                        <button className="btn btn-sm btn-disabled btn-outline gap-2">
+                            <Check className="w-4 h-4" />
+                            Applied
+                        </button>
+                    )}
                     <button 
-                        className="btn btn-success btn-sm text-white gap-2"
-                        onClick={acceptPlan}
-                        disabled={accepting}
+                        className="btn btn-error btn-sm btn-outline gap-2"
+                        onClick={deletePlan}
+                        disabled={deleting || accepting}
                     >
-                        {accepting ? <span className="loading loading-spinner loading-xs"></span> : <Check className="w-4 h-4" />}
-                        Accept & Apply to Budget
+                        {deleting ? <span className="loading loading-spinner loading-xs"></span> : <X className="w-4 h-4" />}
+                        Cancel & delete plan
                     </button>
-                ) : (
-                    <button className="btn btn-sm btn-disabled btn-outline gap-2">
-                        <Check className="w-4 h-4" />
-                        Applied
-                    </button>
-                )}
+                </div>
              </div>
 
              {/* Summary Stats */}

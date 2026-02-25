@@ -226,3 +226,25 @@ export const acceptBudgetPlan = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// 4. Delete Plan
+export const deleteBudgetPlan = async (req, res) => {
+  try {
+    const { uid: userId } = req.user;
+    const { month } = req.query;
+
+    if (!month) {
+      return res.status(400).json({ message: "Month is required (YYYY-MM)" });
+    }
+
+    const deleted = await BudgetPlan.findOneAndDelete({ userId, month });
+    if (!deleted) {
+      return res.status(404).json({ message: "No plan found for this month" });
+    }
+
+    res.json({ success: true, message: "Plan deleted" });
+  } catch (error) {
+    console.error("deleteBudgetPlan error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
