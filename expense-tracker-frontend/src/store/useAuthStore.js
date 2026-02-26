@@ -12,8 +12,12 @@ const useAuthStore = create((set) => ({
   },
 }));
 
-onAuthStateChanged(auth, (user) => {
+// Store the unsubscribe function so it can be cleaned up if needed
+const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
   useAuthStore.getState().setUser(user);
 });
+
+// Export for cleanup (e.g., in tests or when app unmounts)
+export const cleanupAuthListener = () => unsubscribeAuth();
 
 export default useAuthStore;
