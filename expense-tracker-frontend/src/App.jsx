@@ -1,5 +1,6 @@
 import AppRoutes from "@/routes/index.jsx";
 import useAuthStore from "@/store/useAuthStore";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const App = () => {
   const { loading } = useAuthStore();
@@ -13,10 +14,10 @@ const App = () => {
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <AppRoutes />
       <div className="toast toast-bottom toast-end z-1000" />
-      </>
+    </ErrorBoundary>
   );
 }
 
