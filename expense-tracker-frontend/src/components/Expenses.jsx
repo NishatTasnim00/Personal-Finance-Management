@@ -1,4 +1,4 @@
-import { CirclePlus, Wallet, Trash2 } from "lucide-react";
+import { CirclePlus, Wallet, Trash2, Download } from "lucide-react";
 import TransactionForm from "@/components/common/TransactionForm";
 import {
   useGetExpenses,
@@ -9,7 +9,7 @@ import { toastError } from "@/lib/toast";
 import { useState } from "react";
 import { subDays } from "date-fns";
 import FilterBar from "@/components/common/FilterBar";
-import { formatDate } from "@/lib/helper";
+import { formatDate, downloadCSV } from "@/lib/helper";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
 import { defaultExpenseTypes } from "@/lib/helper";
 
@@ -50,6 +50,28 @@ const Expenses = () => {
   };
 
   const expenses = data?.expenses || [];
+
+  const handleDownloadCSV = () => {
+    if (!expenses.length) return;
+
+    const headers = ["Date", "Category", "Description", "Amount", "Recurring"];
+    const rows = expenses.map((expense) => [
+      expense.date,
+      expense.category || "",
+      expense.description || "",
+      expense.amount ?? "",
+      expense.recurring ? expense.recurringFrequency || "Yes" : "No",
+    ]);
+
+    const baseName =
+      data?.period === "custom"
+        ? `expenses-${data?.searchStartDate || ""}-to-${
+            data?.searchEndDate || ""
+          }`
+        : `expenses-${data?.period || "all"}`;
+
+    downloadCSV(baseName, headers, rows);
+  };
 
   const closeTransactionModal = () => {
     document.getElementById("transaction-form-modal")?.close();
@@ -119,6 +141,17 @@ const Expenses = () => {
         setRecurring={setRecurring}
         onApplyCustom={handleApplyCustom}
       />
+      <div className="flex justify-end mt-4">
+        <button
+          type="button"
+          className="btn btn-sm btn-outline gap-2"
+          onClick={handleDownloadCSV}
+          disabled={!expenses.length}
+        >
+          <Download className="w-4 h-4" />
+          Download CSV
+        </button>
+      </div>
       {expenses.length > 0 && (
         <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
           <div className="mt-auto">

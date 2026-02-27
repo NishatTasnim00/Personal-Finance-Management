@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -13,14 +13,19 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import api from "@/lib/api";
-import { format } from "date-fns";
+import { format, subDays } from "date-fns";
 import {
   TrendingUp,
   TrendingDown,
   Wallet,
   ArrowUpRight,
   ArrowDownRight,
+  Download,
 } from "lucide-react";
+import FilterBar from "@/components/common/FilterBar";
+import { useGetIncomes } from "@/hooks/income";
+import { useGetExpenses } from "@/hooks/expense";
+import { downloadCSV } from "@/lib/helper";
 
 const COLORS = [
   "#6366f1",
@@ -34,19 +39,42 @@ const COLORS = [
 ];
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    netWorth: 0,
-    monthlyIncome: 0,
-    monthlyExpense: 0,
-    monthlyBalance: 0,
-    savingsRate: 0,
-    topCategory: "None",
-    topAmount: 0,
-  });
+  const [period, setPeriod] = useState("month");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [tempStartDate, setTempStartDate] = useState(null);
+  const [tempEndDate, setTempEndDate] = useState(null);
+
+  const [netWorth, setNetWorth] = useState(0);
   const [monthlyData, setMonthlyData] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const {
+    data: filteredIncomeResult,
+    isLoading: isFilteredIncomeLoading,
+  } = useGetIncomes({
+    period,
+    startDate,
+    endDate,
+    source: "",
+    enabled: period !== "custom" ? true : Boolean(startDate && endDate),
+  });
+
+  const {
+    data: filteredExpenseResult,
+    isLoading: isFilteredExpenseLoading,
+  } = useGetExpenses({
+    period,
+    startDate,
+    endDate,
+    category: "",
+    recurring: undefined,
+    enabled: period !== "custom" ? true : Boolean(startDate && endDate),
+  });
+
+  const filteredIncomes = filteredIncomeResult?.incomes || [];
+  const filteredExpenses = filteredExpenseResult?.expenses || [];
 
   useEffect(() => {
     fetchDashboardData();
@@ -54,10 +82,10 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch last 6 months income + expense + net worth + goals
+      // Fetch all-time income + expense (for charts), net worth, goals
       const [incomeRes, expenseRes, netWorthRes, goalsRes] = await Promise.all([
-        api.get("/incomes?period=months"),
-        api.get("/expenses?period=months"),
+        api.get("/incomes"),
+        api.get("/expenses"),
         api.get("/stats/net-worth"),
         api.get("/savings-goals"),
       ]);
@@ -65,46 +93,9 @@ const Dashboard = () => {
       const incomes = incomeRes.result?.incomes || [];
       const expenses = expenseRes.result?.expenses || [];
       const goalsData = goalsRes.result || [];
-      const { netWorth } = netWorthRes.result || { netWorth: 0 };
+      const { netWorth: fetchedNetWorth } = netWorthRes.result || { netWorth: 0 };
 
-      // Current month stats
       const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-
-      const currentMonthIncomes = incomes.filter((i) => {
-        const d = new Date(i.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      });
-
-      const currentMonthExpenses = expenses.filter((e) => {
-        const d = new Date(e.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      });
-
-      const totalIncome = currentMonthIncomes.reduce(
-        (sum, i) => sum + i.amount,
-        0
-      );
-      const totalExpense = currentMonthExpenses.reduce(
-        (sum, e) => sum + e.amount,
-        0
-      );
-      const balance = totalIncome - totalExpense;
-      const monthlyChange = balance;
-      const savingsRate =
-        totalIncome > 0
-          ? ((totalIncome - totalExpense) / totalIncome) * 100
-          : 0;
-
-      // Top spending category
-      const categoryMap = {};
-      currentMonthExpenses.forEach((e) => {
-        categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
-      });
-      const topCat = Object.entries(categoryMap).sort(
-        (a, b) => b[1] - a[1]
-      )[0] || ["None", 0];
 
       // Monthly trend (last 6 months)
       const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -121,43 +112,113 @@ const Dashboard = () => {
         const d = new Date(i.date);
         const monthKey = format(d, "MMM");
         const month = last6Months.find((m) => m.name === monthKey);
-        if (month) month.income += i.amount;
+        if (month) month.income += i.amount || 0;
       });
 
       expenses.forEach((e) => {
         const d = new Date(e.date);
         const monthKey = format(d, "MMM");
         const month = last6Months.find((m) => m.name === monthKey);
-        if (month) month.expense += e.amount;
-      });
-
-      // Category pie chart
-      const catData = Object.entries(categoryMap).map(([name, value]) => ({
-        name,
-        value,
-      }));
-
-      setStats({
-        netWorth,
-        totalIncome,
-        totalExpense,
-        monthlyChange,
-        balance,
-        savingsRate: Math.round(savingsRate),
-        topCategory: topCat[0],
-        topAmount: topCat[1],
+        if (month) month.expense += e.amount || 0;
       });
 
       setMonthlyData(last6Months);
-      setCategoryData(
-        catData.length > 0 ? catData : [{ name: "No expenses", value: 1 }]
-      );
       setGoals(goalsData);
+      setNetWorth(fetchedNetWorth);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const derivedStats = useMemo(() => {
+    const totalIncome = filteredIncomes.reduce(
+      (sum, i) => sum + (i.amount || 0),
+      0
+    );
+    const totalExpense = filteredExpenses.reduce(
+      (sum, e) => sum + (e.amount || 0),
+      0
+    );
+    const balance = totalIncome - totalExpense;
+    const savingsRate =
+      totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+
+    const categoryMap = {};
+    filteredExpenses.forEach((e) => {
+      const key = e.category || "other";
+      categoryMap[key] = (categoryMap[key] || 0) + (e.amount || 0);
+    });
+    const topCat =
+      Object.entries(categoryMap).sort((a, b) => b[1] - a[1])[0] || ["None", 0];
+
+    return {
+      totalIncome,
+      totalExpense,
+      balance,
+      monthlyChange: balance,
+      savingsRate: Math.round(savingsRate),
+      topCategory: topCat[0],
+      topAmount: topCat[1],
+    };
+  }, [filteredIncomes, filteredExpenses]);
+
+  const categoryData = useMemo(() => {
+    const categoryMap = {};
+    filteredExpenses.forEach((e) => {
+      const key = e.category || "other";
+      categoryMap[key] = (categoryMap[key] || 0) + (e.amount || 0);
+    });
+    const catData = Object.entries(categoryMap).map(([name, value]) => ({
+      name,
+      value,
+    }));
+    return catData.length > 0 ? catData : [{ name: "No expenses", value: 1 }];
+  }, [filteredExpenses]);
+
+  const handleApplyCustom = () => {
+    if (!tempStartDate || !tempEndDate) return;
+    if (tempStartDate > tempEndDate) return;
+    setStartDate(tempStartDate);
+    setEndDate(tempEndDate);
+  };
+
+  const handleDownloadIncomeCSV = () => {
+    if (!filteredIncomes.length) return;
+    const headers = ["Date", "Source", "Description", "Amount"];
+    const rows = filteredIncomes.map((income) => [
+      income.date,
+      income.source || "",
+      income.description || "",
+      income.amount ?? "",
+    ]);
+    const baseName =
+      filteredIncomeResult?.period === "custom"
+        ? `dashboard-incomes-${filteredIncomeResult?.searchStartDate || ""}-to-${
+            filteredIncomeResult?.searchEndDate || ""
+          }`
+        : `dashboard-incomes-${filteredIncomeResult?.period || period || "all"}`;
+    downloadCSV(baseName, headers, rows);
+  };
+
+  const handleDownloadExpenseCSV = () => {
+    if (!filteredExpenses.length) return;
+    const headers = ["Date", "Category", "Description", "Amount", "Recurring"];
+    const rows = filteredExpenses.map((expense) => [
+      expense.date,
+      expense.category || "",
+      expense.description || "",
+      expense.amount ?? "",
+      expense.recurring ? expense.recurringFrequency || "Yes" : "No",
+    ]);
+    const baseName =
+      filteredExpenseResult?.period === "custom"
+        ? `dashboard-expenses-${filteredExpenseResult?.searchStartDate || ""}-to-${
+            filteredExpenseResult?.searchEndDate || ""
+          }`
+        : `dashboard-expenses-${filteredExpenseResult?.period || period || "all"}`;
+    downloadCSV(baseName, headers, rows);
   };
 
   if (loading) {
@@ -177,16 +238,68 @@ const Dashboard = () => {
         </p>
       </div>
 
+      <FilterBar
+        filter={period}
+        setFilter={(newPeriod) => {
+          setPeriod(newPeriod);
+          if (newPeriod !== "custom") {
+            setStartDate(null);
+            setEndDate(null);
+            setTempStartDate(null);
+            setTempEndDate(null);
+          } else {
+            const defaultStart = subDays(new Date(), 30);
+            const defaultEnd = new Date();
+            const useStart = startDate || defaultStart;
+            const useEnd = endDate || defaultEnd;
+            setStartDate(useStart);
+            setEndDate(useEnd);
+            setTempStartDate(useStart);
+            setTempEndDate(useEnd);
+          }
+        }}
+        from={tempStartDate}
+        setFrom={setTempStartDate}
+        to={tempEndDate}
+        setTo={setTempEndDate}
+        source={""}
+        setSource={() => {}}
+        sourceOptions={[]}
+        onApplyCustom={handleApplyCustom}
+        className="rounded-box"
+      />
+
+      <div className="flex flex-wrap gap-3 justify-end">
+        <button
+          type="button"
+          className="btn btn-sm btn-outline gap-2"
+          onClick={handleDownloadIncomeCSV}
+          disabled={isFilteredIncomeLoading || !filteredIncomes.length}
+        >
+          <Download className="w-4 h-4" />
+          Download Income CSV
+        </button>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline gap-2"
+          onClick={handleDownloadExpenseCSV}
+          disabled={isFilteredExpenseLoading || !filteredExpenses.length}
+        >
+          <Download className="w-4 h-4" />
+          Download Expense CSV
+        </button>
+      </div>
+
       {/* Net Worth Card */}
       <div className="card bg-base-100 text-primary shadow-2xl">
         <div className="card-body text-center">
           <h2 className="text-lg">Your Net Worth</h2>
           <p className="text-5xl font-bold mt-2">
-            ৳{stats.netWorth.toLocaleString()}
+            ৳{netWorth.toLocaleString()}
           </p>
           <p className="text-sm mt-4 opacity-80">
-            +৳{Math.abs(stats.monthlyChange).toLocaleString()} this month
-            {stats.monthlyChange > 0 ? "↑" : "↓"}
+            +৳{Math.abs(derivedStats.monthlyChange).toLocaleString()} this month
+            {derivedStats.monthlyChange > 0 ? "↑" : "↓"}
           </p>
         </div>
       </div>
@@ -199,7 +312,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-base-content/70">Total Income</p>
                 <p className="text-3xl font-bold text-success">
-                  +৳{stats.totalIncome.toLocaleString()}
+                  +৳{derivedStats.totalIncome.toLocaleString()}
                 </p>
               </div>
               <TrendingUp className="w-10 h-10 text-success opacity-80" />
@@ -213,7 +326,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-base-content/70">Total Expense</p>
                 <p className="text-3xl font-bold text-error">
-                  -৳{stats.totalExpense.toLocaleString()}
+                  -৳{derivedStats.totalExpense.toLocaleString()}
                 </p>
               </div>
               <TrendingDown className="w-10 h-10 text-error opacity-80" />
@@ -228,11 +341,11 @@ const Dashboard = () => {
                 <p className="text-sm text-base-content/70">Net Savings</p>
                 <p
                   className={`text-3xl font-bold ${
-                    stats.balance >= 0 ? "text-success" : "text-error"
+                    derivedStats.balance >= 0 ? "text-success" : "text-error"
                   }`}
                 >
-                  {stats.balance >= 0 ? "+" : ""}৳
-                  {stats.balance.toLocaleString()}
+                  {derivedStats.balance >= 0 ? "+" : ""}৳
+                  {derivedStats.balance.toLocaleString()}
                 </p>
               </div>
               <Wallet className="w-10 h-10 text-primary opacity-80" />
@@ -246,10 +359,10 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-base-content/70">Savings Rate</p>
                 <p className="text-3xl font-bold text-primary">
-                  {stats.savingsRate}%
+                  {derivedStats.savingsRate}%
                 </p>
               </div>
-              {stats.savingsRate >= 20 ? (
+              {derivedStats.savingsRate >= 20 ? (
                 <ArrowUpRight className="w-10 h-10 text-success" />
               ) : (
                 <ArrowDownRight className="w-10 h-10 text-warning" />
@@ -370,14 +483,14 @@ const Dashboard = () => {
       </div>
 
       {/* Top Spending */}
-      {stats.topCategory !== "None" && (
+      {derivedStats.topCategory !== "None" && (
         <div className="alert shadow-lg">
           <div>
             <div className="text-xl">Highest Spending</div>
             <div className="text-2xl font-bold capitalize">
-              {stats.topCategory}
+              {derivedStats.topCategory}
             </div>
-            <div className="text-lg">৳{stats.topAmount.toLocaleString()}</div>
+            <div className="text-lg">৳{derivedStats.topAmount.toLocaleString()}</div>
           </div>
         </div>
       )}
