@@ -14,13 +14,16 @@ const runBudgetAI = (inputData) => {
       process.env.AI_SCRIPT_PATH ||
       path.join(
         process.cwd(),
-        "..",
-        "expense-tracker-model",
-        "budget_wrapper.py"
+        "src",
+        "ExpenseTrackerModel",
+        "budget_wrapper.py",
       );
+    const scriptDir = path.dirname(scriptPath);
 
     console.log("Spawning python process:", pythonExecutable, scriptPath);
-    const pythonProcess = spawn(pythonExecutable, [scriptPath]);
+    const pythonProcess = spawn(pythonExecutable, [scriptPath], {
+      cwd: scriptDir,
+    });
 
     let dataString = "";
     let errorString = "";
@@ -102,12 +105,12 @@ export const generateBudgetPlan = async (req, res) => {
       const startOfMonth = new Date(
         lastMonth.getFullYear(),
         lastMonth.getMonth(),
-        1
+        1,
       );
       const endOfMonth = new Date(
         lastMonth.getFullYear(),
         lastMonth.getMonth() + 1,
-        0
+        0,
       );
 
       const incomes = await Income.aggregate([
@@ -173,7 +176,7 @@ export const generateBudgetPlan = async (req, res) => {
     const savedPlan = await BudgetPlan.findOneAndUpdate(
       { userId, month },
       planData,
-      { new: true, upsert: true }
+      { new: true, upsert: true },
     );
 
     res.json({ success: true, plan: savedPlan });
@@ -215,9 +218,9 @@ export const acceptBudgetPlan = async (req, res) => {
             // If we want to restart the budget cycle, we might update startDate.
             // For now, let's just update the amount.
           },
-          { upsert: true, new: true }
+          { upsert: true, new: true },
         );
-      }
+      },
     );
 
     await Promise.all(promises);

@@ -17,7 +17,7 @@ import aiRoutes from './routes/ai.js';
 dotenv.config();
 connectDB();
 const corsOptions = {
-  origin: 'http://localhost:5173', // Vite default port
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 };
 
