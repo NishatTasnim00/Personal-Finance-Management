@@ -21,7 +21,7 @@ const DeleteConfirmation = ({
         <div className="modal-action">
           <form method="dialog">
             <button
-              type="button"
+              type="submit"
               className="btn btn-ghost"
               disabled={isLoading}
             >
