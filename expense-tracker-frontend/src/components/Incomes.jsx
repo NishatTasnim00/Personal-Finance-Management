@@ -1,14 +1,18 @@
-  import { CirclePlus, Banknote, Trash2, X } from "lucide-react";
+  import { CirclePlus, Banknote, Trash2, X, Download } from "lucide-react";
   import TransactionForm from "@/components/common/TransactionForm";
-  import { useGetIncomes, useUpdateIncome, useDeleteIncome } from "@/hooks/income";
+  import {
+    useGetIncomes,
+    useUpdateIncome,
+    useDeleteIncome,
+  } from "@/hooks/income";
   import { toastError } from "@/lib/toast";
   import { useState } from "react";
   import { subDays } from "date-fns";
   import FilterBar from "@/components/common/FilterBar";
-  import { formatDate } from "@/lib/helper";
+  import { formatDate, downloadCSV } from "@/lib/helper";
   import DeleteConfirmation from "@/components/common/DeleteConfirmation";
   import { defaultIncomeSources } from "@/lib/helper";
-
+  
   const Incomes = () => {
     const [period, setPeriod] = useState("month");
     const [startDate, setStartDate] = useState(null);
@@ -42,6 +46,27 @@
     };
 
     const incomes = data?.incomes || [];
+
+    const handleDownloadCSV = () => {
+      if (!incomes.length) return;
+
+      const headers = ["Date", "Source", "Description", "Amount"];
+      const rows = incomes.map((income) => [
+        income.date,
+        income.source || "",
+        income.description || "",
+        income.amount ?? "",
+      ]);
+
+      const baseName =
+        data?.period === "custom"
+          ? `incomes-${data?.searchStartDate || ""}-to-${
+              data?.searchEndDate || ""
+            }`
+          : `incomes-${data?.period || "all"}`;
+
+      downloadCSV(baseName, headers, rows);
+    };
 
     const closeTransactionModal = () => {
       document.getElementById("transaction-form-modal")?.close();
@@ -115,6 +140,17 @@
           onApplyCustom={handleApplyCustom}
           sourcePlaceholder="All Income Sources"
         />
+        <div className="flex justify-end mt-4">
+          <button
+            type="button"
+            className="btn btn-sm btn-outline gap-2"
+            onClick={handleDownloadCSV}
+            disabled={!incomes.length}
+          >
+            <Download className="w-4 h-4" />
+            Download CSV
+          </button>
+        </div>
         {incomes.length && (
           <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
             <div className="mt-auto">

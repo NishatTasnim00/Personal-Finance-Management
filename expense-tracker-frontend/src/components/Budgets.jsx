@@ -5,8 +5,8 @@ import {
   useDeleteBudget,
 } from "@/hooks/budget";
 import TransactionForm from "@/components/common/TransactionForm";
-import { defaultExpenseTypes } from "@/lib/helper";
-import { CirclePlus, Trash2 } from "lucide-react";
+import { defaultExpenseTypes, downloadCSV } from "@/lib/helper";
+import { CirclePlus, Trash2, Download } from "lucide-react";
 import DeleteConfirmation from "@/components/common/DeleteConfirmation";
 
 const Budgets = () => {
@@ -17,6 +17,35 @@ const Budgets = () => {
   const deleteMutation = useDeleteBudget();
 
   const { data: budgets = [], isLoading } = useGetBudgets({ period });
+
+  const handleDownloadCSV = () => {
+    if (!budgets.length) return;
+
+    const headers = [
+      "Category",
+      "Period",
+      "Budget Amount",
+      "Spent",
+      "Remaining",
+      "Progress (%)",
+      "Over Budget",
+    ];
+
+    const rows = budgets.map((budget) => [
+      budget.category || "",
+      budget.period || "",
+      budget.amount ?? "",
+      budget.spent ?? "",
+      budget.remaining ?? "",
+      typeof budget.progress === "number"
+        ? budget.progress.toFixed(2)
+        : "",
+      budget.isOverBudget ? "Yes" : "No",
+    ]);
+
+    const baseName = `budgets-${period || "all"}`;
+    downloadCSV(baseName, headers, rows);
+  };
 
   const closeTransactionModal = () => {
     document.getElementById("transaction-form-modal")?.close();
@@ -47,19 +76,30 @@ const Budgets = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 gap-4">
         <h1 className="text-3xl font-bold text-primary">Budgets</h1>
 
-        <select
-          value={period}
-          onChange={(e) => setPeriod(e.target.value)}
-          className="select select-bordered"
-        >
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-          <option value="all">All</option>
-        </select>
+        <div className="flex items-center gap-3">
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            className="select select-bordered"
+          >
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+            <option value="all">All</option>
+          </select>
+          <button
+            type="button"
+            className="btn btn-sm btn-outline gap-2"
+            onClick={handleDownloadCSV}
+            disabled={!budgets.length}
+          >
+            <Download className="w-4 h-4" />
+            Download CSV
+          </button>
+        </div>
       </div>
 
       {isLoading ? (

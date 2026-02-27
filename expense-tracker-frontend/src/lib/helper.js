@@ -181,3 +181,45 @@ export const formatDate = (date) => {
   if (!date) return "N/A";
   return format(new Date(date), "MMM d, yyyy");
 };
+
+const escapeCSVValue = (value) => {
+  if (value === null || value === undefined) return "";
+  const stringValue = String(value);
+  if (
+    stringValue.includes('"') ||
+    stringValue.includes(",") ||
+    stringValue.includes("\n")
+  ) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+};
+
+export const downloadCSV = (filename, headers, rows) => {
+  if (!Array.isArray(headers) || !Array.isArray(rows)) return;
+
+  const headerLine = headers.map(escapeCSVValue).join(",");
+  const dataLines = rows.map((row) =>
+    (Array.isArray(row) ? row : headers.map((key) => row[key]))
+      .map(escapeCSVValue)
+      .join(",")
+  );
+
+  const csvContent = [headerLine, ...dataLines].join("\n");
+  const blob = new Blob([csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute(
+    "download",
+    filename.endsWith(".csv") ? filename : `${filename}.csv`
+  );
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+};
