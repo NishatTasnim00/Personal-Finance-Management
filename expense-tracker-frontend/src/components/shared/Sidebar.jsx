@@ -25,23 +25,23 @@ export default function Sidebar() {
   const { user } = useAuthStore();
 
   return (
-<aside
-  className={`
-    md:relative
+    <aside
+      className={`
+    fixed top-16 h-[calc(100vh-64px)] 
     z-40
     bg-base-200
+    flex flex-col
     transition-all duration-300
     ${isOpen ? "w-64" : "w-16"}
     ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
   `}
->
-
-  {isOpen && (
-  <div
-    className="fixed inset-0 bg-black/40 z-30 md:hidden"
-    onClick={() => setIsOpen(false)}
-  />
-)}
+    >
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
       {/* ---------- Header (toggle only) ---------- */}
       <div className="flex items-center justify-between p-4 pl-2">
         {/* Logo – visible only when open */}
@@ -97,7 +97,7 @@ export default function Sidebar() {
       </nav>
 
       {/* ---------- User info (bottom) ---------- */}
-      <div className="border-t border-base-300 p-4">
+      <div className="border-t border-base-300 p-4 md:mb-4">
         <div className="flex items-center gap-3">
           <div className="avatar">
             <div className="w-10 rounded-full">
@@ -105,7 +105,7 @@ export default function Sidebar() {
                 src={
                   user?.photoURL ||
                   `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                    user?.displayName || "User"
+                    user?.displayName || "User",
                   )}&background=6366f1&color=fff`
                 }
                 alt="User avatar"
