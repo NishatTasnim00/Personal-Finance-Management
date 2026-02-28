@@ -36,6 +36,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/savings-goals', savingsGoalRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/ai', aiRoutes); 
 
 app.get('/health', (req, res) => {
      res.json({ status: 'ok', timestamp: new Date().toISOString() });
