@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useAuthStore from "@/store/useAuthStore";
 import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useTheme } from "@/context/ThemeContext.jsx";
+import useAuthStore from "@/store/useAuthStore";
+import { Menu } from "lucide-react";
+import MenuDrawer from "@/components/shared/MenuDrawer";
 
 const Navbar = () => {
   const { loading } = useAuthStore();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleTheme = () => {
     setTheme(theme === "pastel" ? "synthwave" : "pastel");
@@ -19,19 +23,30 @@ const Navbar = () => {
   };
 
   return (
-    <div className="navbar bg-base-100 shadow-lg fixed top-0 z-50 w-full">
-      <div className="flex-1">
-        <Link
-          to="/dashboard"
-          className="btn btn-ghost text-xl font-bold text-primary"
-        >
-          Finance Tracker
-        </Link>
-      </div>
+    <>
+      <div className="navbar bg-base-100 shadow-md fixed top-0 z-50 w-full px-4">
+        {/* Left Section */}
+        <div className="flex-1 flex items-center gap-3">
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden btn btn-ghost btn-circle"
+            onClick={() => setIsMenuOpen(true)}
+          >
+            <Menu />
+          </button>
 
-      <div className="flex-none gap-2">
-        {/* Theme Toggle */}
-        <label className="swap swap-rotate btn btn-ghost btn-circle">
+          <Link
+            to="/dashboard"
+            className="text-xl font-bold text-primary"
+          >
+            Finance Tracker
+          </Link>
+        </div>
+
+        {/* Right Section */}
+        <div className="flex-none gap-2 flex items-center">
+          {/* Theme Toggle */}
+     <label className="swap swap-rotate btn btn-ghost btn-circle">
           <input
             type="checkbox"
             checked={theme === "synthwave"}
@@ -53,39 +68,32 @@ const Navbar = () => {
           </svg>
         </label>
 
-        {/* Profile Link */}
-        <Link to="/profile" className="btn btn-ghost">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-            />
-          </svg>
-          <span className="hidden sm:inline ml-1">Profile</span>
-        </Link>
+          {/* Profile */}
+          <Link to="/profile" className="btn btn-ghost hidden sm:flex">
+            Profile
+          </Link>
 
-        {/* Logout Button */}
-        <button
-          className="btn btn-secondary btn-sm"
-          onClick={handleLogout}
-          disabled={loading}
-        >
-          {loading ? (
-            <span className="loading loading-spinner"></span>
-          ) : (
-            "Logout"
-          )}
-        </button>
+          {/* Logout */}
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={handleLogout}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="loading loading-spinner"></span>
+            ) : (
+              "Logout"
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+
+      {/* Mobile Drawer */}
+      <MenuDrawer
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+      />
+    </>
   );
 };
 

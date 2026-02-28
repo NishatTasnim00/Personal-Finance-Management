@@ -25,14 +25,23 @@ export default function Sidebar() {
   const { user } = useAuthStore();
 
   return (
-    <aside
-      className={`
-        flex flex-col bg-base-200 text-base-content
-        transition-all duration-300
-        ${isOpen ? "w-64" : "w-16"}
-        min-h-full
-      `}
-    >
+<aside
+  className={`
+    md:relative
+    z-40
+    bg-base-200
+    transition-all duration-300
+    ${isOpen ? "w-64" : "w-16"}
+    ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+  `}
+>
+
+  {isOpen && (
+  <div
+    className="fixed inset-0 bg-black/40 z-30 md:hidden"
+    onClick={() => setIsOpen(false)}
+  />
+)}
       {/* ---------- Header (toggle only) ---------- */}
       <div className="flex items-center justify-between p-4 pl-2">
         {/* Logo – visible only when open */}
