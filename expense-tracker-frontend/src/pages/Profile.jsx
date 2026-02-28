@@ -1,4 +1,3 @@
-// pages/Profile.jsx or components/Profile.jsx
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toastSuccess, toastError } from "@/lib/toast";
@@ -137,7 +136,7 @@ const Profile = () => {
     )}&background=6366f1&color=fff&bold=true`;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-4xl mx-auto md:p-6">
       {/* <h1 className="text-3xl font-bold mb-8 text-center">Profile Settings</h1> */}
 
       <div className="card bg-base-100 shadow-2xl">

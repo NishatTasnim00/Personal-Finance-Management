@@ -6,9 +6,18 @@ import { useTheme } from "@/context/ThemeContext.jsx";
 import useAuthStore from "@/store/useAuthStore";
 import { Menu } from "lucide-react";
 import MenuDrawer from "@/components/shared/MenuDrawer";
+import { useGetProfile } from "@/hooks/profile";
 
 const Navbar = () => {
-  const { loading } = useAuthStore();
+  const { loading, user } = useAuthStore();
+  const { data: profile } = useGetProfile();
+
+  const avatarUrl =
+    profile?.avatar ||
+    user?.photoURL ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+      profile?.name || user?.displayName || "User"
+    )}&background=6366f1&color=fff`;
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,14 +77,16 @@ const Navbar = () => {
           </svg>
         </label>
 
-          {/* Profile */}
-          <Link to="/profile" className="btn btn-ghost hidden sm:flex">
-            Profile
-          </Link>
+          {/* Profile Avatar */}
+          {/* <Link to="/profile" className="btn btn-ghost btn-circle avatar">
+            <div className="w-9 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1">
+              <img src={avatarUrl} alt="Profile" className="object-cover" />
+            </div>
+          </Link> */}
 
           {/* Logout */}
           <button
-            className="btn btn-secondary btn-sm"
+            className="btn btn-primary btn-sm"
             onClick={handleLogout}
             disabled={loading}
           >
