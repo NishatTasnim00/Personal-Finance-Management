@@ -21,9 +21,14 @@ const runBudgetAI = (inputData) => {
     const scriptDir = path.dirname(scriptPath);
 
     console.log("Spawning python process:", pythonExecutable, scriptPath);
-    const pythonProcess = spawn(pythonExecutable, [scriptPath], {
-      cwd: scriptDir,
-    });
+    const pythonProcess = spawn(
+      `"${pythonExecutable}" "${scriptPath}"`,
+      [],
+      {
+        cwd: scriptDir,
+        shell: true,
+      }
+    );
 
     let dataString = "";
     let errorString = "";
