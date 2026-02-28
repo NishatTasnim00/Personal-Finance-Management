@@ -1,6 +1,8 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import morgan from 'morgan';
 
@@ -14,7 +16,7 @@ import savingsGoalRoutes from './routes/savingsGoal.js';
 import statsRoutes from './routes/stats.js';
 import aiRoutes from './routes/ai.js';
 
-dotenv.config();
+// dotenv.config();
 connectDB();
 const corsOptions = {
   origin: process.env.CORS_ORIGIN,
@@ -34,7 +36,10 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/savings-goals', savingsGoalRoutes);
 app.use('/api/stats', statsRoutes);
-app.use('/api/ai', aiRoutes);
+
+app.get('/health', (req, res) => {
+     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+   });
 
 // Error handler for multer and other middleware errors
 app.use((err, req, res, next) => {
