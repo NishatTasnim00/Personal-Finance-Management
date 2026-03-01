@@ -8,16 +8,18 @@ import {
   Goal,
   Wallet,
   Brain,
+  LayoutDashboard,
 } from "lucide-react";
 import useAuthStore from "@/store/useAuthStore";
 import { useGetProfile } from "@/hooks/profile";
 
 const navItems = [
-  { name: "Income", path: "/dashboard/incomes", icon: <BanknoteArrowUp /> },
-  { name: "Expense", path: "/dashboard/expenses", icon: <BanknoteArrowDown /> },
-  { name: "Budgets", path: "/dashboard/budgets", icon: <Wallet /> },
-  { name: "Savings Goals", path: "/dashboard/savings-goals", icon: <Goal /> },
-  { name: "AI Planner", path: "/dashboard/ai-planner", icon: <Brain /> },
+  { name: "Dashboard",     path: "/dashboard",               icon: <LayoutDashboard /> },
+  { name: "Income",        path: "/dashboard/incomes",        icon: <BanknoteArrowUp /> },
+  { name: "Expense",       path: "/dashboard/expenses",       icon: <BanknoteArrowDown /> },
+  { name: "Budgets",       path: "/dashboard/budgets",        icon: <Wallet /> },
+  { name: "Savings Goals", path: "/dashboard/savings-goals",  icon: <Goal /> },
+  { name: "AI Planner",    path: "/dashboard/ai-planner",     icon: <Brain /> },
 ];
 
 export default function Sidebar() {
@@ -44,7 +46,7 @@ export default function Sidebar() {
     <>
       {/* Mobile hamburger - only on small screens */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => setIsOpen(!isOpen)}
         className="md:hidden fixed top-[18px] left-4 z-50 p-2 rounded-lg bg-base-200 shadow hover:bg-neutral"
         aria-label="Open sidebar"
       >
@@ -55,7 +57,7 @@ export default function Sidebar() {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
+          onClick={() => setIsOpen(!isOpen)}
         />
       )}
 
