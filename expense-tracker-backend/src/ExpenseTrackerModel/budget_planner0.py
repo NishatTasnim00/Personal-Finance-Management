@@ -94,9 +94,47 @@ class BudgetAI:
             "Travel",
             "Movies",
             "Coffee",
-            "Miscellaneous",  # catch-all so unknown categories route to wants
         ]
         self.fixed_budget = ["Rent", "EMI/Loan/Insurance", "House Rent"]
+
+    # def _predict_category_trend(self, cat_data, category_name=None):
+    #     """
+    #     Predict next month amount using regression + safety caps
+    #     """
+    #     if cat_data.empty:
+    #         return 0
+
+    #     monthly = (
+    #         cat_data.groupby(cat_data["date"].dt.to_period("M"))["amount"]
+    #         .sum()
+    #         .sort_index()
+    #     )
+
+    #     values = monthly[monthly > 0].values
+
+    #     if len(values) == 0:
+    #         return 0
+
+    #     # Special handling for fixed costs: Use max of last 3 months instead of regression
+    #     # This prevents under-predicting rent/EMI if the trend is flat or slightly negative
+    #     if category_name in self.fixed_budget:
+    #         # If we have recent data, trust the recent high (e.g., rent increase)
+    #         return round(values[-3:].max()) if len(values) > 0 else 0
+
+    #     # Too little data → mean fallback
+    #     if len(values) <= 3:
+    #         return round(values.mean() * 1.05)
+
+    #     reg = MonthlyTrendRegressor().fit(values)
+    #     pred = reg.predict_next()
+    #     params = reg.get_params()
+
+    #     # 🔒 Safety logic
+    #     if params["slope"] <= 0:
+    #         return round(values.mean())
+
+    #     capped_pred = min(pred, values.max() * 1.2)
+    #     return round(capped_pred * 1.05)
 
     def _predict_category_trend(self, cat_data, category_name=None):
         if cat_data.empty:
@@ -204,10 +242,7 @@ class BudgetAI:
         ]
         wants_categories += other_categories
 
-        # 50/30/20 always applies when no custom budget is set.
-        # If data is limited, we use it as a safe baseline.
-        # Only False when user explicitly sets a spending limit.
-        use_503020 = total_budget is None
+        use_503020 = num_months >= 3
 
         if total_budget is not None:
             spending_cap = total_budget
@@ -230,113 +265,59 @@ class BudgetAI:
                 )
             spending_cap = monthly_income * 0.80
             savings = monthly_income * 0.20
-            # Always apply 50/30/20 when no custom limit.
-            # With enough data (3+ months) predictions personalize the breakdown.
-            # With less data, 50/30/20 serves as a safe, standard baseline.
-            needs_pct = 0.625   # 50% of income = 62.5% of 80% spending
-            wants_pct = 0.375   # 30% of income = 37.5% of 80% spending
-            if num_months >= 3:
-                note.append("Following 50/30/20 rule personalized from your spending history.")
-            else:
-                note.append(
-                    f"Only {num_months} month(s) of data — applying standard 50/30/20 rule as baseline. "
-                    "Keep tracking to get a plan personalized to your actual spending!"
-                )
+            note.append("Following healthy 50/30/20 rule with full savings protected.")
+            needs_pct = 0.625
+            wants_pct = 0.375
 
-        # ── Step 1: Allocate fixed needs first (rent, EMI) at full historical ──
-        needs_breakdown = {}
-        fixed_allocated = 0
-        for cat in needs_categories:
-            amt = base_prediction.get(cat, 0)
-            if amt <= 0:
-                continue
-            if cat in self.fixed_budget:
-                # Cap fixed at spending_cap to avoid impossible budgets
-                allocated = min(amt, spending_cap)
-                needs_breakdown[cat] = round(allocated)
-                fixed_allocated += allocated
+        needs_cap = spending_cap * needs_pct
+        wants_cap = spending_cap * wants_pct
 
-        if fixed_allocated > spending_cap:
-            # Fixed costs alone exceed budget — warn and skip wants
-            note.append(
-                f"⚠️ Your fixed essentials (e.g. Rent/EMI) exceed your ৳{int(spending_cap):,} limit. "
-                f"Consider increasing your budget or reducing fixed costs."
-            )
-            wants_breakdown = {}
-            needs_cap = fixed_allocated
-            wants_cap = 0
-        else:
-            # ── Step 2: Remaining after fixed → split between variable needs & wants
-            remaining = spending_cap - fixed_allocated
-            needs_cap = fixed_allocated + remaining * needs_pct
-            wants_cap = remaining * wants_pct
+        needs_sum = sum(base_prediction.get(c, 0) for c in needs_categories) or 1
+        wants_sum = sum(base_prediction.get(c, 0) for c in wants_categories) or 1
 
-            # Variable needs: scale proportionally to fit remaining needs budget
-            variable_needs = {
-                c: base_prediction.get(c, 0)
-                for c in needs_categories
-                if c not in self.fixed_budget and base_prediction.get(c, 0) > 0
-            }
-            variable_sum = sum(variable_needs.values()) or 1
-            variable_budget = remaining * needs_pct
-            for cat, amt in variable_needs.items():
-                needs_breakdown[cat] = round(amt * (variable_budget / variable_sum))
+        needs_breakdown = {
+            c: round(base_prediction.get(c, 0) * (needs_cap / needs_sum))
+            for c in needs_categories
+            if base_prediction.get(c, 0) > 0
+        }
+        wants_breakdown = {
+            c: round(base_prediction.get(c, 0) * (wants_cap / wants_sum))
+            for c in wants_categories
+            if base_prediction.get(c, 0) > 0
+        }
 
-            # ── Step 3: Wants — scale to fit wants budget
-            wants_pred = {
-                c: base_prediction.get(c, 0)
-                for c in wants_categories
-                if base_prediction.get(c, 0) > 0
-            }
-            wants_sum = sum(wants_pred.values()) or 1
-            wants_breakdown = {
-                c: round(amt * (wants_cap / wants_sum))
-                for c, amt in wants_pred.items()
-            }
+        for fixed_cat in self.fixed_budget:
+            if fixed_cat in base_prediction:
+                historical = base_prediction[fixed_cat]
+                current = needs_breakdown.get(fixed_cat, 0)
+                if current < historical * 0.9:
+                    boost_needed = historical - current
+                    needs_breakdown[fixed_cat] = historical
+                    if wants_breakdown and boost_needed > 0:
+                        reduction_per_want = boost_needed / len(wants_breakdown)
+                        for w in list(wants_breakdown):
+                            wants_breakdown[w] = max(0, round(wants_breakdown[w] - reduction_per_want))
+                    note.append(f"{fixed_cat} protected at full historical amount.")
 
         if not needs_breakdown:
             note.append("No past expenses detected — using standard starter Needs allocation.")
-            # Use min of needs_cap and available spending to respect limit
-            available_for_needs = min(needs_cap, spending_cap - sum(wants_breakdown.values()))
             needs_breakdown = {
-                "House Rent":            int(available_for_needs * 0.40),
-                "Groceries":             int(available_for_needs * 0.25),
-                "Utilities & Bills":     int(available_for_needs * 0.15),
-                "Transportation":        int(available_for_needs * 0.10),
-                "Healthcare/Insurance":  int(available_for_needs * 0.10),
+                "House Rent":            int(needs_cap * 0.40),
+                "Groceries":             int(needs_cap * 0.25),
+                "Utilities & Bills":     int(needs_cap * 0.15),
+                "Transportation":        int(needs_cap * 0.10),
+                "Healthcare/Insurance":  int(needs_cap * 0.10),
             }
 
         if not wants_breakdown:
             note.append("No past wants detected — using standard starter Wants allocation.")
-            # Use min of wants_cap and remaining after needs to respect limit
-            available_for_wants = min(wants_cap, max(0, spending_cap - sum(needs_breakdown.values())))
             wants_breakdown = {
-                "Dining Out & Food Delivery":    int(available_for_wants * 0.30),
-                "Entertainment & Subscriptions": int(available_for_wants * 0.25),
-                "Shopping & Personal Care":      int(available_for_wants * 0.20),
-                "Travel & Leisure":              int(available_for_wants * 0.15),
-                "Miscellaneous Fun":             int(available_for_wants * 0.10),
+                "Dining Out & Food Delivery":    int(wants_cap * 0.30),
+                "Entertainment & Subscriptions": int(wants_cap * 0.25),
+                "Shopping & Personal Care":      int(wants_cap * 0.20),
+                "Travel & Leisure":              int(wants_cap * 0.15),
+                "Miscellaneous Fun":             int(wants_cap * 0.10),
             }
-
-        # ── Hard cap: guarantee total never exceeds spending_cap ────────────────
-        total_allocated = sum(needs_breakdown.values()) + sum(wants_breakdown.values())
-        if total_allocated > spending_cap:
-            overflow = total_allocated - spending_cap
-            # Trim wants first, then needs (excluding fixed)
-            for w in sorted(wants_breakdown, key=lambda k: wants_breakdown[k], reverse=True):
-                trim = min(wants_breakdown[w], overflow)
-                wants_breakdown[w] -= round(trim)
-                overflow -= trim
-                if overflow <= 0:
-                    break
-            if overflow > 0:
-                for n in sorted(needs_breakdown, key=lambda k: needs_breakdown[k], reverse=True):
-                    if n not in self.fixed_budget:
-                        trim = min(needs_breakdown[n], overflow)
-                        needs_breakdown[n] -= round(trim)
-                        overflow -= trim
-                        if overflow <= 0:
-                            break
 
         return {
             "monthly_income":       monthly_income if monthly_income is not None else "Not provided",

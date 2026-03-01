@@ -1,13 +1,19 @@
+# ----------------------
 # macOS system files
+# ----------------------
 .DS_Store
-.DS_Store?
+**/.DS_Store
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
-Thumbs.db
 
+# Windows system files
+Thumbs.db
+ehthumbs.db
+
+# ----------------------
 # Logs
+# ----------------------
 logs
 *.log
 npm-debug.log*
@@ -16,21 +22,38 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ----------------------
+# Environment files
+# ----------------------
 .env
-node_modules
-dist
-dist-ssr
 *.local
 
-# Editor directories and files
+# ----------------------
+# Node
+# ----------------------
+node_modules/
+dist/
+dist-ssr/
+
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# ----------------------
+# Editors
+# ----------------------
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.DS_Store
-**/.DS_Store

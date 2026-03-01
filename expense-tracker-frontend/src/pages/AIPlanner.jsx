@@ -202,7 +202,7 @@ const AIPlanner = () => {
                     <div className="stat">
                         <div className="stat-title">Recommended Savings</div>
                         <div className="stat-value text-primary">৳{plan.recommendedSavings.toLocaleString()}</div>
-                        <div className="stat-desc">20% of income (Target)</div>
+                        <div className="stat-desc">20% of income + (Target)</div>
                     </div>
                 </div>
                 <div className="stats shadow">
