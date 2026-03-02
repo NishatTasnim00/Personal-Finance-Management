@@ -13,7 +13,7 @@ export const createBudget = async (req, res) => {
     }
 
     const budget = await Budget.create({
-      category: category.trim(),
+      category: category.trim().toLowerCase(),
       amount: Number(amount),
       period,
       userId: getUserId(req),
@@ -62,7 +62,8 @@ export const getBudgets = async (req, res) => {
 
         const matchFilter = {
           userId,
-          category: b.category,
+          // Case-insensitive match so "food" budget matches "Food" expense and vice versa
+          category: { $regex: new RegExp(`^${b.category.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') },
         };
 
         if (startDate) {
@@ -102,7 +103,7 @@ export const updateBudget = async (req, res) => {
     const budget = await Budget.findOneAndUpdate(
       { _id: req.params.id, userId: getUserId(req) },
       {
-        category: category?.trim(),
+        category: category?.trim().toLowerCase(),
         amount: amount ? Number(amount) : undefined,
         period: period || undefined,
       },

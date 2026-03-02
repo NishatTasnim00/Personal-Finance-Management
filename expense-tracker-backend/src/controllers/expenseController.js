@@ -30,7 +30,7 @@ export const createExpense = async (req, res) => {
     }
 
     const expense = await Expense.create({
-      category: category.trim(),
+      category: category.trim().toLowerCase(),
       icon: icon?.trim(),
       color: color?.trim(),
       description: description?.trim(),
