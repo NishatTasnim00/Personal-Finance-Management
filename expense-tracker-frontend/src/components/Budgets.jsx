@@ -76,10 +76,10 @@ const Budgets = () => {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold text-primary">Budgets</h1>
+      <div className="sm:flex justify-between items-center mb-6 gap-4">
+        <h1 className="text-3xl font-bold text-primary mb-4 sm:mb-0">Budgets</h1>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}

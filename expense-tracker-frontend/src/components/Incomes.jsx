@@ -140,7 +140,7 @@
           onApplyCustom={handleApplyCustom}
           sourcePlaceholder="All Income Sources"
         />
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end my-4">
           <button
             type="button"
             className="btn btn-sm btn-outline gap-2"
@@ -152,7 +152,7 @@
           </button>
         </div>
         {incomes.length && (
-          <div className="card w-fit min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
+          <div className="card w-fit sm:min-w-90 font-medium bg-base-100 shadow-lg hover:shadow-xl transition-all duration-300 p-6 border border-base-100">
             <div className="mt-auto">
               <h3 className="text-3xl text-primary">Total Income</h3>
               <p className="text-3xl font-bold text-success">
